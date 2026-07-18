@@ -52,8 +52,16 @@ self.addEventListener('fetch', (e) => {
         return response;
       })
       .catch(() => {
-        // Offline fallback
-        return caches.match(e.request);
+        // Offline fallback routing
+        return caches.match(e.request).then((matching) => {
+          if (matching) return matching;
+          if (url.pathname === '/screens') {
+            return caches.match('/index.html');
+          }
+          if (url.pathname === '/' || url.pathname === '/admin') {
+            return caches.match('/admin.html');
+          }
+        });
       })
   );
 });

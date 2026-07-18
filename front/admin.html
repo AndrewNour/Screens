@@ -1549,6 +1549,18 @@
     <div id="toast"></div>
 
     <script>
+      // Redirect /admin.html or /admin to / to ensure correct PWA scope
+      if (window.location.pathname.endsWith('/admin.html') || window.location.pathname.endsWith('/admin')) {
+        window.location.href = window.location.origin + '/';
+      }
+
+      // Register service worker with root scope immediately
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(reg => console.log('Admin PWA ServiceWorker registered', reg))
+          .catch(err => console.log('Admin PWA ServiceWorker failed', err));
+      }
+
       // ── THEME ──
       (function () {
         const saved = localStorage.getItem("lumina_admin_theme") || "dark";
@@ -2459,15 +2471,6 @@
           deferredPrompt = null;
           if (installBtn) installBtn.style.display = "none";
           if (sidebarInstallBtn) sidebarInstallBtn.style.display = "none";
-        });
-      }
-
-      // PWA Service Worker registration
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Admin PWA ServiceWorker registered', reg))
-            .catch(err => console.log('Admin PWA ServiceWorker failed', err));
         });
       }
 

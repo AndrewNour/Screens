@@ -941,6 +941,18 @@
       </div>
     </div>
     <script>
+      // Redirect /index.html to /screens to ensure correct PWA scope
+      if (window.location.pathname.endsWith('/index.html')) {
+        window.location.href = window.location.origin + '/screens';
+      }
+
+      // Register service worker with specific screens scope immediately
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { scope: '/screens' })
+          .then(reg => console.log('Screens PWA ServiceWorker registered', reg))
+          .catch(err => console.log('Screens PWA ServiceWorker failed', err));
+      }
+
       // ── THEME (sidebar only — stage tokens are not affected) ──
       (function () {
         const saved = localStorage.getItem("lumina_screen_theme") || "dark";
@@ -1408,13 +1420,6 @@
       window.addEventListener("DOMContentLoaded", () => {
         loadFromServer();
         connectWebSocket();
-        
-        // PWA registration (On Air-Screens)
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Screens PWA ServiceWorker registered', reg))
-            .catch(err => console.log('Screens PWA ServiceWorker failed', err));
-        }
 
         // Body click interaction helper to satisfy browser autoplay restrictions
         document.body.addEventListener("click", () => {
