@@ -331,7 +331,7 @@ app.get('/screens', (req, res) => {
   res.sendFile(path.join(__dirname, '../front/index.html'));
 });
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../front/index.html'));
+  res.sendFile(path.join(__dirname, '../front/admin.html'));
 });
 
 // Real-time Cron checking: Auto-delete expired ads every 5 seconds
