@@ -320,19 +320,19 @@ app.post('/api/ads/reorder', (req, res) => {
 // Serve uploads folder statically
 app.use('/uploads', express.static(UPLOADS_DIR));
 
-// Serve other static files from the front/ directory
-app.use(express.static(path.join(__dirname, '../front')));
-
-// Default routing mapping to the front/ directory
+// Default routing mapping to the front/ directory (defined BEFORE static middleware to override index.html)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../front/admin.html'));
+});
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../front/admin.html'));
 });
 app.get('/screens', (req, res) => {
   res.sendFile(path.join(__dirname, '../front/index.html'));
 });
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../front/admin.html'));
-});
+
+// Serve other static files from the front/ directory (disabling default index.html fallback)
+app.use(express.static(path.join(__dirname, '../front'), { index: false }));
 
 // Real-time Cron checking: Auto-delete expired ads every 5 seconds
 setInterval(() => {
