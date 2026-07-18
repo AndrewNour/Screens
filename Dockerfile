@@ -11,7 +11,7 @@ COPY --chown=node:node front/ ./front/
 COPY --chown=node:node back/ ./back/
 
 # Pre-create uploads directory and database file with correct ownership
-RUN mkdir -p back/uploads && touch back/ads.json && chown -R node:node /app
+RUN mkdir -p back/uploads && echo "[]" > back/ads.json && chown -R node:node /app
 
 # Switch to standard non-root user
 USER node

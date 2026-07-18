@@ -52,9 +52,17 @@ function getAds() {
   }
   try {
     const raw = fs.readFileSync(DATA_FILE, 'utf8');
+    if (!raw.trim()) {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([]));
+      return [];
+    }
     return JSON.parse(raw);
   } catch (err) {
     console.error('Error reading ads database:', err);
+    // Auto-repair corrupt database
+    try {
+      fs.writeFileSync(DATA_FILE, JSON.stringify([]));
+    } catch(e) {}
     return [];
   }
 }
