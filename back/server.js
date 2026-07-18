@@ -10,7 +10,7 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 7860;
 const DATA_FILE = path.join(__dirname, 'ads.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
