@@ -1556,7 +1556,7 @@
 
       // Register service worker with root scope immediately
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        navigator.serviceWorker.register('/admin_sw.js', { scope: '/' })
           .then(reg => console.log('Admin PWA ServiceWorker registered', reg))
           .catch(err => console.log('Admin PWA ServiceWorker failed', err));
       }

@@ -1,10 +1,8 @@
-const CACHE_NAME = 'screen-ads-v1';
+const CACHE_NAME = 'screens-ads-v1';
 const ASSETS = [
+  '/screens',
   '/index.html',
-  '/admin.html',
-  '/admin_manifest.json',
   '/screens_manifest.json',
-  '/logo2.png',
   '/Untitled-1.png'
 ];
 
@@ -34,7 +32,6 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   
-  // Skip API calls and websocket connections
   if (url.pathname.startsWith('/api') || e.request.url.startsWith('ws')) {
     return;
   }
@@ -42,7 +39,6 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request)
       .then((response) => {
-        // If valid response, clone and update cache
         if (response && response.status === 200 && response.type === 'basic') {
           const responseToCache = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -52,14 +48,10 @@ self.addEventListener('fetch', (e) => {
         return response;
       })
       .catch(() => {
-        // Offline fallback routing
         return caches.match(e.request).then((matching) => {
           if (matching) return matching;
           if (url.pathname === '/screens') {
             return caches.match('/index.html');
-          }
-          if (url.pathname === '/' || url.pathname === '/admin') {
-            return caches.match('/admin.html');
           }
         });
       })
