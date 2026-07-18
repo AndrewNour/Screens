@@ -941,6 +941,60 @@
       </div>
     </div>
     <script>
+      // ── INDEXEDDB SETUP ──
+      const DB_NAME = 'OnAirDB';
+      const DB_VERSION = 1;
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('cached-ads')) {
+              db.createObjectStore('cached-ads', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('offline-ads')) {
+              db.createObjectStore('offline-ads', { keyPath: 'tempId' });
+            }
+          };
+          request.onsuccess = (e) => resolve(e.target.result);
+          request.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function putItems(storeName, items) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          items.forEach(item => store.put(item));
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function getAllItems(storeName) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readonly');
+          const store = tx.objectStore(storeName);
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function clearStore(storeName) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          store.clear();
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      }
+
       // Redirect /index.html to /screens to ensure correct PWA scope
       if (window.location.pathname.endsWith('/index.html')) {
         window.location.href = window.location.origin + '/screens';
@@ -1020,12 +1074,14 @@
           div.id = `slide-${i}`;
 
           const isVideo = ad.type === "video";
-          const hasSrc = ad.src && ad.src.trim() !== "";
+          const hasSrc = (ad.src && ad.src.trim() !== "") || ad.fileBlob;
+          const mediaUrl = ad.fileBlob ? URL.createObjectURL(ad.fileBlob) : ad.src;
+          
           let bgContent;
           if (hasSrc && isVideo) {
             bgContent = `<video class="bg-video" autoplay muted playsinline preload="auto"></video>`;
           } else if (hasSrc) {
-            bgContent = `<img class="bg-image" src="${ad.src}" alt="${ad.title || ""}" loading="lazy">`;
+            bgContent = `<img class="bg-image" src="${mediaUrl}" alt="${ad.title || ""}" loading="lazy">`;
           } else {
             bgContent = `
               <div class="ph-glow" style="width:400px;height:400px;background:${ad.glowColor || "#6366f1"};top:20%;left:20%;"></div>
@@ -1057,7 +1113,7 @@
 
           if (hasSrc && isVideo) {
             const v = div.querySelector("video");
-            v.src = ad.src;
+            v.src = mediaUrl;
           }
         });
       }
@@ -1085,16 +1141,18 @@
           div.id = `panel-item-${i}`;
           div.onclick = () => goTo(i);
 
-          const hasSrc = ad.src && ad.src.trim() !== "";
+          const hasSrc = (ad.src && ad.src.trim() !== "") || ad.fileBlob;
           const isVideo = ad.type === "video";
+          const mediaUrl = ad.fileBlob ? URL.createObjectURL(ad.fileBlob) : ad.src;
+          
           div.innerHTML = `
             <div class="panel-num">${i + 1}</div>
             <div class="panel-thumb">
               ${
                 hasSrc
                   ? isVideo
-                    ? `<video src="${ad.src}" muted></video>`
-                    : `<img src="${ad.src}" alt="">`
+                    ? `<video src="${mediaUrl}" muted></video>`
+                    : `<img src="${mediaUrl}" alt="">`
                   : `<div class="panel-thumb-placeholder">🖼</div>`
               }
               ${hasSrc ? `<div class="media-type-badge">${isVideo ? "Video" : "Image"}</div>` : ""}
@@ -1244,7 +1302,7 @@
         const bar = document.getElementById("progress-bar");
         if (bar) bar.style.width = "0%";
 
-        if (ad.type === "video" && ad.src) {
+        if (ad.type === "video" && (ad.src || ad.fileBlob)) {
           const slideEl = document.getElementById(`slide-${current}`);
           const v = slideEl ? slideEl.querySelector("video") : null;
           if (v) {
@@ -1297,9 +1355,44 @@
       async function loadFromServer(preserveIndex) {
         try {
           const res = await fetch('/api/ads');
-          ADS = await res.json();
+          if (res.ok) {
+            const serverAds = await res.json();
+            // Cache in background
+            cacheAdsLocally(serverAds);
+            ADS = serverAds;
+          } else {
+            throw new Error("Server error");
+          }
         } catch (e) {
-          console.error("Failed to load playlist from server:", e);
+          console.error("Failed to load playlist from server, loading offline cache:", e);
+          const cached = await getAllItems('cached-ads');
+          ADS = cached;
+        }
+
+        // Merge any locally pending offline ads (from same browser IndexedDB)
+        try {
+          const offlineAds = await getAllItems('offline-ads');
+          const offlineMapped = offlineAds.map(ad => ({
+            ...ad,
+            id: ad.tempId,
+            src: '', // Will play from fileBlob object URL
+            isOffline: true,
+            title: ad.title,
+            category: ad.category,
+            desc: ad.desc,
+            duration: ad.duration,
+            expiresAt: ad.expiresAt,
+            active: ad.active,
+            muted: ad.muted,
+            showDetails: ad.showDetails,
+            startTime: ad.startTime,
+            endTime: ad.endTime,
+            days: ad.days,
+            type: ad.type
+          }));
+          ADS = [...ADS, ...offlineMapped];
+        } catch (err) {
+          console.error("Failed to merge offline ads in screen:", err);
         }
 
         const list = getActiveAds();
@@ -1323,6 +1416,42 @@
           
         buildPanel(list);
         goTo(current);
+      }
+
+      // Background local caching of server ads and their media files as Blobs
+      async function cacheAdsLocally(serverAds) {
+        try {
+          const cached = await getAllItems('cached-ads');
+          const cachedMap = new Map(cached.map(item => [item.id, item]));
+          const dbItems = [];
+          
+          for (const ad of serverAds) {
+            const cachedAd = cachedMap.get(ad.id);
+            if (cachedAd && cachedAd.src === ad.src && cachedAd.fileBlob) {
+              dbItems.push(cachedAd);
+            } else if (ad.src) {
+              try {
+                const res = await fetch(ad.src);
+                if (res.ok) {
+                  const blob = await res.blob();
+                  dbItems.push({ ...ad, fileBlob: blob });
+                } else {
+                  dbItems.push(ad);
+                }
+              } catch (err) {
+                dbItems.push(ad);
+              }
+            } else {
+              dbItems.push(ad);
+            }
+          }
+          
+          await clearStore('cached-ads');
+          await putItems('cached-ads', dbItems);
+          console.log('Display media cache updated successfully.');
+        } catch (err) {
+          console.error("Failed to cache display ads locally:", err);
+        }
       }
 
       // WebSocket listener

@@ -1549,6 +1549,117 @@
     <div id="toast"></div>
 
     <script>
+      // ── INDEXEDDB SETUP ──
+      const DB_NAME = 'OnAirDB';
+      const DB_VERSION = 1;
+
+      function openDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(DB_NAME, DB_VERSION);
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('cached-ads')) {
+              db.createObjectStore('cached-ads', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('offline-ads')) {
+              db.createObjectStore('offline-ads', { keyPath: 'tempId' });
+            }
+          };
+          request.onsuccess = (e) => resolve(e.target.result);
+          request.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function putItems(storeName, items) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          items.forEach(item => store.put(item));
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function getAllItems(storeName) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readonly');
+          const store = tx.objectStore(storeName);
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function deleteItem(storeName, key) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          store.delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      async function clearStore(storeName) {
+        const db = await openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          store.clear();
+          tx.oncomplete = () => resolve();
+          tx.onerror = (e) => reject(e.target.error);
+        });
+      }
+
+      // Sync offline ads back to the server
+      async function syncOfflineAds() {
+        if (!navigator.onLine) return;
+        try {
+          const offlineAds = await getAllItems('offline-ads');
+          if (!offlineAds.length) return;
+          
+          toast(`🔄 Syncing ${offlineAds.length} offline advertisement(s)...`);
+          
+          for (const ad of offlineAds) {
+            const formData = new FormData();
+            formData.append("title", ad.title);
+            formData.append("category", ad.category);
+            formData.append("desc", ad.desc);
+            formData.append("duration", ad.duration);
+            formData.append("expiresAt", ad.expiresAt || '');
+            formData.append("active", ad.active);
+            formData.append("muted", ad.muted);
+            formData.append("showDetails", ad.showDetails);
+            formData.append("startTime", ad.startTime || '');
+            formData.append("endTime", ad.endTime || '');
+            formData.append("days", JSON.stringify(ad.days || []));
+            formData.append("media", ad.fileBlob, ad.fileName);
+
+            const res = await fetch('/api/ads', {
+              method: 'POST',
+              body: formData
+            });
+
+            if (res.ok) {
+              await deleteItem('offline-ads', ad.tempId);
+              console.log(`Synced offline ad: ${ad.title}`);
+            } else {
+              console.error(`Failed to sync ad ${ad.title}`);
+            }
+          }
+          
+          toast("✅ All offline ads synced successfully!");
+          load();
+        } catch (err) {
+          console.error("Sync error:", err);
+        }
+      }
+
+      window.addEventListener('online', syncOfflineAds);
+
       // Redirect /admin.html or /admin to / to ensure correct PWA scope
       if (window.location.pathname.endsWith('/admin.html') || window.location.pathname.endsWith('/admin')) {
         window.location.href = window.location.origin + '/';
@@ -1712,15 +1823,98 @@
 
       // ── API INTEGRATION ──
       async function load() {
+        if (navigator.onLine) {
+          await syncOfflineAds();
+        }
+        
         try {
           const res = await fetch('/api/ads');
-          ads = await res.json();
-          lastSaved = new Date(); // Update the last update time on load
-          render();
-          updateStats();
+          if (res.ok) {
+            ads = await res.json();
+            lastSaved = new Date(); // Update the last update time on load
+            // Cache in IndexedDB for offline viewing
+            await cacheAdsLocally(ads);
+          } else {
+            throw new Error("Server error");
+          }
         } catch (e) {
-          console.error("Failed to load ads:", e);
-          toast("⚠ Error connecting to server");
+          console.error("Failed to load ads from server, loading local cache:", e);
+          toast("⚠ Operating in Offline Mode");
+          // Fallback to local cache in IndexedDB
+          const cached = await getAllItems('cached-ads');
+          ads = cached.map(ad => {
+            if (ad.fileBlob) {
+              return {
+                ...ad,
+                src: URL.createObjectURL(ad.fileBlob)
+              };
+            }
+            return ad;
+          });
+        }
+
+        // Add any offline pending uploads to the list so they display locally
+        try {
+          const offlineAds = await getAllItems('offline-ads');
+          const offlineMapped = offlineAds.map(ad => ({
+            ...ad,
+            id: ad.tempId,
+            src: URL.createObjectURL(ad.fileBlob),
+            isOffline: true,
+            title: ad.title,
+            category: ad.category,
+            desc: ad.desc,
+            duration: ad.duration,
+            expiresAt: ad.expiresAt,
+            active: ad.active,
+            muted: ad.muted,
+            showDetails: ad.showDetails,
+            startTime: ad.startTime,
+            endTime: ad.endTime,
+            days: ad.days,
+            type: ad.type
+          }));
+          ads = [...ads, ...offlineMapped];
+        } catch (err) {
+          console.error("Failed to merge offline ads:", err);
+        }
+
+        render();
+        updateStats();
+      }
+
+      // Cache ads to IndexedDB
+      async function cacheAdsLocally(serverAds) {
+        try {
+          const cached = await getAllItems('cached-ads');
+          const cachedMap = new Map(cached.map(item => [item.id, item]));
+          const dbItems = [];
+          
+          for (const ad of serverAds) {
+            const cachedAd = cachedMap.get(ad.id);
+            if (cachedAd && cachedAd.src === ad.src && cachedAd.fileBlob) {
+              dbItems.push(cachedAd);
+            } else if (ad.src) {
+              try {
+                const res = await fetch(ad.src);
+                if (res.ok) {
+                  const blob = await res.blob();
+                  dbItems.push({ ...ad, fileBlob: blob });
+                } else {
+                  dbItems.push(ad);
+                }
+              } catch (err) {
+                dbItems.push(ad);
+              }
+            } else {
+              dbItems.push(ad);
+            }
+          }
+          
+          await clearStore('cached-ads');
+          await putItems('cached-ads', dbItems);
+        } catch (err) {
+          console.error("Failed to cache ads locally:", err);
         }
       }
 
@@ -1819,6 +2013,7 @@
                 <span class="badge ${ad.active ? "badge-active" : "badge-inactive"}">${ad.active ? "Active" : "Inactive"}</span>
                 ${expired ? '<span class="badge badge-expired">Expired</span>' : ""}
                 ${ad.active && !expired && !scheduled ? '<span class="badge badge-expired" style="background:rgba(245,158,11,0.1);color:#f59e0b;">Off Schedule</span>' : ""}
+                ${ad.isOffline ? '<span class="badge" style="background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2);">Offline Pending</span>' : ""}
               </div>
               <div class="ad-meta">
                 <span>${ad.category || "—"}</span>
@@ -2300,6 +2495,10 @@
         saveBtn.textContent = "Saving...";
 
         try {
+          if (!navigator.onLine && modalMode === 'add') {
+            throw new Error("Offline");
+          }
+
           let url = '/api/ads';
           let method = 'POST';
           if (modalMode === 'edit') {
@@ -2322,7 +2521,39 @@
           }
         } catch (e) {
           console.error(e);
-          toast("⚠ Connection error to server");
+          if (modalMode === 'add' && pendingMedia && pendingMedia.file) {
+            try {
+              const tempId = 'offline_' + Date.now();
+              const offlineAd = {
+                tempId,
+                title,
+                category,
+                desc,
+                duration: parseInt(duration) || 10,
+                expiresAt: expiresAt || null,
+                active: active === 'true',
+                muted: isMuted,
+                showDetails: showDetails,
+                startTime,
+                endTime,
+                days: selectedDays,
+                type: pendingMedia.type,
+                fileBlob: pendingMedia.file,
+                fileName: pendingMedia.fileName,
+                order: Date.now()
+              };
+              
+              await putItems('offline-ads', [offlineAd]);
+              toast("💾 Saved locally (Offline)! Will upload when connection returns.");
+              closeModal();
+              load();
+            } catch (dbErr) {
+              console.error("IndexedDB error:", dbErr);
+              toast("⚠ Failed to save locally");
+            }
+          } else {
+            toast("⚠ Connection error to server");
+          }
         } finally {
           saveBtn.disabled = false;
           saveBtn.textContent = modalMode === 'edit' ? "Update Advertisement" : "Save Advertisement";
