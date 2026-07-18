@@ -11,8 +11,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "Untitled-1.png",
-      "sizes": "1024x1024",
+      "src": "/Untitled-1.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/Untitled-1.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
   ]
