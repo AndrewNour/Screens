@@ -2,17 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy back-end dependencies
-COPY back/package*.json ./back/
+# Copy back-end dependencies as node user
+COPY --chown=node:node back/package*.json ./back/
 RUN cd back && npm install
 
-# Copy front-end files
-COPY front/ ./front/
+# Copy front-end and back-end directories
+COPY --chown=node:node front/ ./front/
+COPY --chown=node:node back/ ./back/
 
-# Copy back-end files
-COPY back/ ./back/
+# Pre-create uploads directory and database file with correct ownership
+RUN mkdir -p back/uploads && touch back/ads.json && chown -R node:node /app
 
-# Expose port (Hugging Face default)
+# Switch to standard non-root user
+USER node
+
+# Expose default Hugging Face Spaces port
 EXPOSE 7860
 
 # Start server
