@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>خدمة الشاشات</title>
-    <link rel="manifest" href="screens_manifest.json" />
+    <link rel="manifest" href="/screens_manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap"
@@ -779,7 +779,7 @@
   </head>
   <body>
     <div id="loader">
-      <img src="Untitled-1.png" alt="Logo" style="max-width: 80%; max-height: 50vh; object-fit: contain; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);" />
+      <img src="/Untitled-1.png" alt="Logo" style="max-width: 80%; max-height: 50vh; object-fit: contain; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);" />
       <div class="loader-bar"><div class="loader-fill"></div></div>
     </div>
 
@@ -846,7 +846,7 @@
 
       <div id="panel">
         <div class="panel-brand">
-          <img src="logo2.png" alt="Logo" />
+          <img src="/logo2.png" alt="Logo" />
           <div class="panel-brand-text">
             <div class="panel-brand-title">
               كنيسة السيدة العذراء مريم <br />والشهيد ابي سيفين
@@ -933,7 +933,7 @@
         <div class="panel-list" id="panel-list"></div>
 
         <div class="panel-footer">
-          <img src="Untitled-1.png" alt="" />
+          <img src="/Untitled-1.png" alt="" />
           <span style="font-size: 18px">on Air اسرة الانبا مكاريوس </span>
         </div>
       </div>
@@ -1409,7 +1409,7 @@
         
         // PWA registration (On Air-Screens)
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./sw.js')
+          navigator.serviceWorker.register('/sw.js')
             .then(reg => console.log('Screens PWA ServiceWorker registered', reg))
             .catch(err => console.log('Screens PWA ServiceWorker failed', err));
         }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard</title>
-    <link rel="manifest" href="admin_manifest.json" />
+    <link rel="manifest" href="/admin_manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap"
@@ -1144,7 +1144,7 @@
           </svg>
           Add Advertisement
         </a>
-        <a class="nav-item" href="index.html" target="_blank">
+        <a class="nav-item" href="/screens" target="_blank">
           <svg
             width="16"
             height="16"
@@ -2457,6 +2457,15 @@
           deferredPrompt = null;
           if (installBtn) installBtn.style.display = "none";
           if (sidebarInstallBtn) sidebarInstallBtn.style.display = "none";
+        });
+      }
+
+      // PWA Service Worker registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Admin PWA ServiceWorker registered', reg))
+            .catch(err => console.log('Admin PWA ServiceWorker failed', err));
         });
       }
 

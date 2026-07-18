@@ -1,11 +1,11 @@
 const CACHE_NAME = 'screen-ads-v1';
 const ASSETS = [
-  './',
-  './index.html',
-  './admin.html',
-  './manifest.json',
-  './logo2.png',
-  './Untitled-1.png'
+  '/',
+  '/screens',
+  '/admin_manifest.json',
+  '/screens_manifest.json',
+  '/logo2.png',
+  '/Untitled-1.png'
 ];
 
 self.addEventListener('install', (e) => {
