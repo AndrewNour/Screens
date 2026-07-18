@@ -1,7 +1,7 @@
 const CACHE_NAME = 'screen-ads-v1';
 const ASSETS = [
-  '/',
-  '/screens',
+  '/index.html',
+  '/admin.html',
   '/admin_manifest.json',
   '/screens_manifest.json',
   '/logo2.png',
