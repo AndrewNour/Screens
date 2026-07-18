@@ -1,0 +1,1437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>خدمة الشاشات</title>
+    <link rel="manifest" href="screens_manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        /* Sidebar theme tokens — ONLY these change with light/dark mode */
+        --bg: #080a0f;
+        --surface: rgba(255, 255, 255, 0.045);
+        --surface-hover: rgba(255, 255, 255, 0.075);
+        --surface-strong: rgba(255, 255, 255, 0.09);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.14);
+        --accent: #6366f1;
+        --accent2: #a78bfa;
+        --accent-glow: rgba(99, 102, 241, 0.35);
+        --text: #f1f5f9;
+        --text-muted: rgba(241, 245, 249, 0.46);
+        --text-faint: rgba(241, 245, 249, 0.28);
+        --radius: 16px;
+        --panel-w: 304px;
+        --panel-bg: rgba(8, 10, 15, 0.86);
+        --panel-bg-2: rgba(255, 255, 255, 0.025);
+
+        /* Stage tokens — ALWAYS dark, never themed */
+        --stage-bg: #000;
+        --stage-topbar-grad: linear-gradient(
+          to bottom,
+          rgba(0, 0, 0, 0.55) 0%,
+          transparent 100%
+        );
+        --stage-content-grad: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.85) 0%,
+          transparent 100%
+        );
+      }
+
+      html[data-theme="light"] {
+        --bg: #eef0f6;
+        --surface: rgba(10, 12, 24, 0.04);
+        --surface-hover: rgba(10, 12, 24, 0.07);
+        --surface-strong: rgba(10, 12, 24, 0.09);
+        --border: rgba(10, 12, 24, 0.09);
+        --border-strong: rgba(10, 12, 24, 0.16);
+        --text: #0d1017;
+        --text-muted: rgba(13, 16, 23, 0.72);
+        --text-faint: rgba(13, 16, 23, 0.52);
+        --panel-bg: rgba(255, 255, 255, 0.95);
+        --panel-bg-2: rgba(10, 12, 24, 0.025);
+        /* --stage-* tokens intentionally NOT overridden: ad area stays dark in light mode */
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        overflow: hidden;
+        user-select: none;
+        transition:
+          background 0.35s ease,
+          color 0.35s ease;
+      }
+
+      /* ── LAYOUT ── */
+      #app {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* ── MAIN STAGE (always dark, theme-independent) ── */
+      #stage {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        background: var(--stage-bg);
+        min-width: 0;
+      }
+
+      .slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition:
+          opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1),
+          transform 1.1s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: scale(1.04);
+        pointer-events: none;
+      }
+      .slide.active {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
+        z-index: 2;
+      }
+      .slide.prev {
+        opacity: 0;
+        transform: scale(0.97);
+        z-index: 1;
+      }
+
+      .slide-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        transition: transform 8s linear;
+      }
+      .slide.active .slide-bg {
+        transform: scale(1.06);
+      }
+
+      .slide-bg img.bg-image,
+      .slide-bg video.bg-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+
+      .slide-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          135deg,
+          rgba(0, 0, 0, 0.55) 0%,
+          rgba(0, 0, 0, 0.15) 50%,
+          rgba(0, 0, 0, 0.65) 100%
+        );
+      }
+
+      .slide-content {
+        position: absolute;
+        bottom: 50px;
+        right: 50px;
+        left: auto;
+        padding: 20px 24px;
+        background: rgba(8, 10, 15, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius);
+        z-index: 3;
+        max-width: 400px;
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+      .slide-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 999px;
+        margin-top: 6px;
+        margin-bottom: 6px;
+      }
+      .slide-title {
+        font-family: "Syne", sans-serif;
+        font-size: clamp(18px, 2.2vw, 28px);
+        font-weight: 700;
+        line-height: 1.2;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        margin-bottom: 4px;
+      }
+      .slide-desc {
+        font-size: clamp(12px, 1.1vw, 15px);
+        color: rgba(255, 255, 255, 0.75);
+        line-height: 1.5;
+        margin-top: 4px;
+      }
+
+      /* ── PROGRESS BAR ── */
+      #progress-wrap {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.12);
+      }
+      #progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        width: 0%;
+        transition: width 0.1s linear;
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+
+      /* ── SLIDE COUNTER ── */
+      #slide-counter {
+        display: none !important;
+      }
+      .counter-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.25);
+        transition: all 0.35s;
+        cursor: pointer;
+      }
+      .counter-dot.active {
+        width: 20px;
+        border-radius: 4px;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+
+      /* ══════════════════════ SIDE PANEL (themed dashboard) ══════════════════════ */
+      #panel {
+        width: var(--panel-w);
+        height: 100%;
+        background: var(--panel-bg);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        flex-shrink: 0;
+        z-index: 5;
+      }
+
+      /* — Brand header — */
+      .panel-brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 18px 18px 16px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .panel-brand img {
+        width: 46px;
+        height: 46px;
+        border-radius: 11px;
+        object-fit: cover;
+        box-shadow: 0 0 0 1px var(--border-strong);
+        flex-shrink: 0;
+      }
+      .panel-brand-text {
+        flex: 1;
+        min-width: 0;
+      }
+      .panel-brand-title {
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 1px;
+        color: var(--text);
+        line-height: 1.25;
+      }
+      .panel-brand-sub {
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin-top: 2px;
+      }
+
+      /* — Control buttons row (moved off the ad stage) — */
+      .panel-controls {
+        display: flex;
+        gap: 7px;
+        flex-shrink: 0;
+      }
+      .ctrl-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          color 0.2s,
+          border-color 0.2s,
+          transform 0.15s;
+        flex-shrink: 0;
+      }
+      .ctrl-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+        border-color: var(--border-strong);
+        transform: translateY(-1px);
+      }
+      .ctrl-btn:active {
+        transform: translateY(0);
+      }
+
+      /* — Mini stat cards — */
+      .panel-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        padding: 14px 16px 4px;
+        flex-shrink: 0;
+      }
+      .stat-mini {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 9px 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 3px;
+        transition:
+          background 0.2s,
+          border-color 0.2s;
+      }
+      .stat-mini:hover {
+        background: var(--surface-hover);
+        border-color: var(--border-strong);
+      }
+      .stat-mini-icon {
+        font-size: 13px;
+        line-height: 1;
+        opacity: 0.85;
+      }
+      .stat-mini-value {
+        font-family: "Syne", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+      }
+      .stat-mini-label {
+        font-size: 8.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        font-weight: 600;
+      }
+
+      /* — Playlist header — */
+      .panel-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .panel-header h3 {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .panel-counter {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+      .panel-counter span {
+        color: var(--accent2);
+        font-weight: 700;
+      }
+
+      .panel-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 10px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(127, 127, 127, 0.18) transparent;
+      }
+      .panel-list::-webkit-scrollbar {
+        width: 4px;
+      }
+      .panel-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .panel-list::-webkit-scrollbar-thumb {
+        background: rgba(127, 127, 127, 0.18);
+        border-radius: 4px;
+      }
+
+      .panel-item {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 8px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition:
+          background 0.22s,
+          transform 0.18s,
+          border-color 0.22s;
+        border: 1px solid transparent;
+      }
+      .panel-item:hover {
+        background: var(--surface-hover);
+        transform: translateX(2px);
+      }
+      .panel-item.active-item {
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.16),
+          rgba(167, 139, 250, 0.08)
+        );
+        border-color: rgba(99, 102, 241, 0.32);
+      }
+
+      .panel-thumb {
+        width: 44px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(127, 127, 127, 0.1);
+        flex-shrink: 0;
+        overflow: hidden;
+        position: relative;
+      }
+      .panel-thumb img,
+      .panel-thumb video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .panel-thumb-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        background: linear-gradient(
+          135deg,
+          rgba(99, 102, 241, 0.2),
+          rgba(167, 139, 250, 0.2)
+        );
+      }
+      .panel-thumb .playing-badge {
+        position: absolute;
+        inset: 0;
+        background: rgba(99, 102, 241, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .media-type-badge {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        font-size: 7px;
+        font-weight: 700;
+        padding: 1px 3px;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.62);
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .panel-info {
+        flex: 1;
+        overflow: hidden;
+      }
+      .panel-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 3px;
+      }
+      .panel-meta {
+        font-size: 9.5px;
+        color: var(--text-faint);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .now-badge {
+        font-size: 8.5px;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--accent2);
+        background: rgba(99, 102, 241, 0.2);
+        padding: 2px 7px;
+        border-radius: 999px;
+      }
+      .duration-badge {
+        font-size: 9.5px;
+        font-weight: 600;
+        color: var(--text-faint);
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 1px 6px;
+        border-radius: 999px;
+      }
+
+      .panel-num {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-faint);
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .active-item .panel-num {
+        color: var(--accent2);
+      }
+
+      /* — Footer brand strip — */
+      .panel-footer {
+        flex-shrink: 0;
+        padding: 12px 18px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .panel-footer img {
+        width: 50px;
+        height: px;
+        border-radius: 7px;
+        object-fit: cover;
+        opacity: 0.85;
+      }
+      .panel-footer span {
+        font-size: 9px;
+        color: var(--text);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      /* ── PLACEHOLDER SLIDE DESIGNS ── */
+      .ph-1 {
+        background: linear-gradient(
+          135deg,
+          #1a0533 0%,
+          #0d1b4b 50%,
+          #081525 100%
+        );
+      }
+      .ph-2 {
+        background: linear-gradient(
+          135deg,
+          #0f2027 0%,
+          #203a43 50%,
+          #2c5364 100%
+        );
+      }
+      .ph-3 {
+        background: linear-gradient(135deg, #200122 0%, #6f0000 100%);
+      }
+      .ph-4 {
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a1a2e 50%,
+          #16213e 100%
+        );
+      }
+      .ph-5 {
+        background: linear-gradient(135deg, #001f3f 0%, #003366 100%);
+      }
+      .ph-6 {
+        background: linear-gradient(
+          135deg,
+          #0d0d0d 0%,
+          #1c1c1c 50%,
+          #2d1b0e 100%
+        );
+      }
+      .ph-7 {
+        background: linear-gradient(
+          135deg,
+          #0f0c29 0%,
+          #302b63 50%,
+          #24243e 100%
+        );
+      }
+      .ph-8 {
+        background: linear-gradient(
+          135deg,
+          #0a2342 0%,
+          #0e3460 50%,
+          #1a1a2e 100%
+        );
+      }
+      .ph-9 {
+        background: linear-gradient(
+          135deg,
+          #1a0000 0%,
+          #2d0000 50%,
+          #1a0a00 100%
+        );
+      }
+      .ph-10 {
+        background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+      }
+
+      .ph-glow {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+      }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 1024px) {
+        :root {
+          --panel-w: 250px;
+        }
+        .slide-content {
+          padding: 36px 40px;
+        }
+        .panel-stats {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        :root {
+          --panel-w: 215px;
+        }
+        .slide-content {
+          padding: 24px 20px;
+        }
+      }
+
+      @media (max-width: 600px) {
+        :root {
+          --panel-w: 0px;
+        }
+        #panel {
+          display: none;
+        }
+        #slide-counter {
+          display: none;
+        }
+        .slide-content {
+          padding: 16px 16px 32px;
+        }
+        /* On small screens with no sidebar, restore floating controls on the stage */
+        #mobile-controls {
+          display: flex !important;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .slide-content {
+          padding: 12px 12px 28px;
+        }
+        .slide-title {
+          font-size: 18px;
+        }
+      }
+
+      /* Mobile-only floating controls (hidden by default, shown when sidebar collapses) */
+      #mobile-controls {
+        display: none;
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 10;
+        gap: 8px;
+      }
+      #mobile-controls .ctrl-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+      #mobile-controls .ctrl-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* ── LOADING ── */
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: var(--stage-bg);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        transition:
+          opacity 0.6s,
+          visibility 0.6s;
+        padding: 20px;
+        text-align: center;
+      }
+      #loader.hidden {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .loader-logo {
+        font-family: "Syne", sans-serif;
+        font-size: clamp(16px, 4vw, 28px);
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        -webkit-background-clip-: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.4;
+      }
+      .loader-bar {
+        width: 180px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .loader-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        border-radius: 999px;
+        animation: loadfill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes loadfill {
+        from {
+          width: 0%;
+        }
+        to {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader">
+      <img src="Untitled-1.png" alt="Logo" style="max-width: 80%; max-height: 50vh; object-fit: contain; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);" />
+      <div class="loader-bar"><div class="loader-fill"></div></div>
+    </div>
+
+    <div id="app">
+      <div id="stage">
+        <div id="mobile-controls">
+          <button class="ctrl-btn" id="btn-theme-mobile" title="Toggle Theme">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          </button>
+          <button class="ctrl-btn" id="btn-install-mobile" title="Install App" style="display: none;">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <button
+            id="btn-fullscreen-mobile"
+            class="ctrl-btn"
+            title="Fullscreen"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div id="progress-wrap"><div id="progress-bar"></div></div>
+        <div id="slide-counter"></div>
+      </div>
+
+      <div id="panel">
+        <div class="panel-brand">
+          <img src="logo2.png" alt="Logo" />
+          <div class="panel-brand-text">
+            <div class="panel-brand-title">
+              كنيسة السيدة العذراء مريم <br />والشهيد ابي سيفين
+            </div>
+          </div>
+          <div class="panel-controls">
+            <button class="ctrl-btn" id="btn-install" title="Install App" style="display: none;">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+            <button class="ctrl-btn" id="btn-theme" title="Toggle Theme">
+              <svg
+                id="theme-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            </button>
+            <button id="btn-fullscreen" class="ctrl-btn" title="Fullscreen">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-stats">
+          <div class="stat-mini" title="Total Ads">
+            <div class="stat-mini-icon">📋</div>
+            <div class="stat-mini-value" id="stat-total">0</div>
+            <div class="stat-mini-label">Total</div>
+          </div>
+          <div class="stat-mini" title="Currently Playing">
+            <div class="stat-mini-icon">▶️</div>
+            <div class="stat-mini-value" id="stat-playing-num">—</div>
+            <div class="stat-mini-label">Playing</div>
+          </div>
+          <div class="stat-mini" title="Playlist Duration">
+            <div class="stat-mini-icon">⏱</div>
+            <div class="stat-mini-value" id="stat-duration">0s</div>
+            <div class="stat-mini-label">Loop</div>
+          </div>
+        </div>
+
+        <div class="panel-header">
+          <h3>Playlist</h3>
+          <div class="panel-counter">
+            Ad <span id="panel-current">1</span> /
+            <span id="panel-total">0</span>
+          </div>
+        </div>
+        <div class="panel-list" id="panel-list"></div>
+
+        <div class="panel-footer">
+          <img src="Untitled-1.png" alt="" />
+          <span style="font-size: 18px">on Air اسرة الانبا مكاريوس </span>
+        </div>
+      </div>
+    </div>
+    <script>
+      // ── THEME (sidebar only — stage tokens are not affected) ──
+      (function () {
+        const saved = localStorage.getItem("lumina_screen_theme") || "dark";
+        document.documentElement.setAttribute("data-theme", saved);
+      })();
+      function toggleTheme() {
+        const cur =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = cur === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("lumina_screen_theme", next);
+      }
+      document
+        .getElementById("btn-theme")
+        .addEventListener("click", toggleTheme);
+      const themeMobileBtn = document.getElementById("btn-theme-mobile");
+      if (themeMobileBtn) themeMobileBtn.addEventListener("click", toggleTheme);
+
+      let ADS = [];
+      let current = 0,
+        interval = null,
+        elapsed = 0;
+      let activeVideoEl = null;
+      let timerWorker = null; // Background Web Worker timer
+
+      function isExpired(ad) {
+        if (!ad.expiresAt) return false;
+        return new Date(ad.expiresAt).getTime() < Date.now();
+      }
+
+      function isScheduledNow(ad) {
+        const now = new Date();
+        
+        // Expiry check
+        if (isExpired(ad)) return false;
+
+        // Days of week check
+        if (ad.days && ad.days.length > 0) {
+          const currentDay = now.getDay();
+          if (!ad.days.includes(currentDay)) return false;
+        }
+
+        // Time of day check
+        if (ad.startTime && ad.endTime) {
+          const currentHM = now.toTimeString().slice(0, 5); // "HH:MM"
+          if (currentHM < ad.startTime || currentHM > ad.endTime) return false;
+        }
+
+        return true;
+      }
+
+      function getActiveAds() {
+        const all = ADS.filter((a) => a.active !== false && isScheduledNow(a));
+        return all.length ? all : [];
+      }
+
+      let ws = null;
+
+      function buildSlides(list) {
+        const stage = document.getElementById("stage");
+        document.querySelectorAll(".slide").forEach((s) => s.remove());
+        list.forEach((ad, i) => {
+          const div = document.createElement("div");
+          div.className = "slide";
+          div.id = `slide-${i}`;
+
+          const isVideo = ad.type === "video";
+          const hasSrc = ad.src && ad.src.trim() !== "";
+          let bgContent;
+          if (hasSrc && isVideo) {
+            bgContent = `<video class="bg-video" autoplay muted playsinline preload="auto"></video>`;
+          } else if (hasSrc) {
+            bgContent = `<img class="bg-image" src="${ad.src}" alt="${ad.title || ""}" loading="lazy">`;
+          } else {
+            bgContent = `
+              <div class="ph-glow" style="width:400px;height:400px;background:${ad.glowColor || "#6366f1"};top:20%;left:20%;"></div>
+              <div class="ph-glow" style="width:250px;height:250px;background:${ad.glowColor || "#6366f1"};bottom:10%;right:15%;opacity:0.25;"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                <span style="font-size:clamp(60px,12vw,120px);filter:drop-shadow(0 0 40px ${ad.glowColor || "#6366f1"});">🖼</span>
+              </div>
+            `;
+          }
+
+          const showDetails = ad.showDetails !== false;
+          let contentHtml = "";
+          
+          if (showDetails && (ad.category || ad.desc)) {
+            contentHtml = `
+              <div class="slide-content">
+                ${ad.category ? `<div class="slide-tag">${ad.category}</div>` : ""}
+                ${ad.desc ? `<div class="slide-desc">${ad.desc}</div>` : ""}
+              </div>
+            `;
+          }
+
+          div.innerHTML = `
+            <div class="slide-bg ${hasSrc ? "" : ad.bg || "ph-1"}">${bgContent}</div>
+            <div class="slide-overlay"></div>
+            ${contentHtml}
+          `;
+          stage.appendChild(div);
+
+          if (hasSrc && isVideo) {
+            const v = div.querySelector("video");
+            v.src = ad.src;
+          }
+        });
+      }
+
+      function buildDots(list) {
+        const c = document.getElementById("slide-counter");
+        if (!c) return;
+        c.innerHTML = "";
+        list.forEach((_, i) => {
+          const d = document.createElement("div");
+          d.className = "counter-dot" + (i === 0 ? " active" : "");
+          d.onclick = () => goTo(i);
+          c.appendChild(d);
+        });
+      }
+
+      function buildPanel(list) {
+        const panelList = document.getElementById("panel-list");
+        panelList.innerHTML = "";
+        document.getElementById("panel-total").textContent = list.length;
+        list.forEach((ad, i) => {
+          const div = document.createElement("div");
+          const isPlaying = i === current;
+          div.className = "panel-item" + (isPlaying ? " active-item" : "");
+          div.id = `panel-item-${i}`;
+          div.onclick = () => goTo(i);
+
+          const hasSrc = ad.src && ad.src.trim() !== "";
+          const isVideo = ad.type === "video";
+          div.innerHTML = `
+            <div class="panel-num">${i + 1}</div>
+            <div class="panel-thumb">
+              ${
+                hasSrc
+                  ? isVideo
+                    ? `<video src="${ad.src}" muted></video>`
+                    : `<img src="${ad.src}" alt="">`
+                  : `<div class="panel-thumb-placeholder">🖼</div>`
+              }
+              ${hasSrc ? `<div class="media-type-badge">${isVideo ? "Video" : "Image"}</div>` : ""}
+              ${isPlaying ? `<div class="playing-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg></div>` : ""}
+            </div>
+            <div class="panel-info">
+              <div class="panel-title">${ad.title || "Advertisement " + (i + 1)}</div>
+              <div class="panel-meta">
+                ${isPlaying ? '<span class="now-badge">Now Playing</span>' : `<span class="duration-badge">⏱ ${isVideo ? "Video" : (ad.duration || 10) + "s"}</span>`}
+              </div>
+            </div>
+          `;
+          panelList.appendChild(div);
+        });
+        updateStatCards(list);
+      }
+
+      function updateStatCards(list) {
+        const totalEl = document.getElementById("stat-total");
+        const playingEl = document.getElementById("stat-playing-num");
+        const durEl = document.getElementById("stat-duration");
+        if (!totalEl) return;
+        totalEl.textContent = list.length;
+        const dur = list.reduce(
+          (s, a) => s + (a.type === "video" ? 0 : Number(a.duration || 10)),
+          0,
+        );
+        durEl.textContent = dur + "s";
+        if (list.length) {
+          playingEl.textContent = current + 1 + "/" + list.length;
+        } else {
+          playingEl.textContent = "—";
+        }
+      }
+
+      function broadcastNowPlaying(ad) {
+        try {
+          const payload = ad
+            ? {
+                title: ad.title || "Untitled Ad",
+                category: ad.category || "",
+                type: ad.type === "video" ? "video" : "image",
+                ts: Date.now(),
+                id: ad.id
+              }
+            : { none: true, ts: Date.now() };
+          localStorage.setItem("lumina_now_playing", JSON.stringify(payload));
+        } catch (e) {}
+      }
+
+      function goTo(idx) {
+        const list = getActiveAds();
+        if (!list.length) return;
+        const prev = current;
+        current = (idx + list.length) % list.length;
+
+        if (activeVideoEl) {
+          activeVideoEl.pause();
+          activeVideoEl = null;
+        }
+
+        document.querySelectorAll(".slide").forEach((s, i) => {
+          s.className =
+            "slide" + (i === current ? " active" : i === prev ? " prev" : "");
+        });
+        document.querySelectorAll(".counter-dot").forEach((d, i) => {
+          d.className = "counter-dot" + (i === current ? " active" : "");
+        });
+        document.querySelectorAll(".panel-item").forEach((p, i) => {
+          p.className = "panel-item" + (i === current ? " active-item" : "");
+          const badge = p.querySelector(".playing-badge");
+          const meta = p.querySelector(".panel-meta");
+          const ad = list[i];
+          if (i === current) {
+            if (!badge) {
+              const t = p.querySelector(".panel-thumb");
+              const b = document.createElement("div");
+              b.className = "playing-badge";
+              b.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>`;
+              t.appendChild(b);
+            }
+            meta.innerHTML = '<span class="now-badge">Now Playing</span>';
+          } else {
+            if (badge) badge.remove();
+            meta.innerHTML = `<span class="duration-badge">⏱ ${ad.type === "video" ? "Video" : (ad.duration || 10) + "s"}</span>`;
+          }
+        });
+        document.getElementById("panel-current").textContent = current + 1;
+        const item = document.getElementById(`panel-item-${current}`);
+        if (item) item.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        const ad = list[current];
+        broadcastNowPlaying(ad);
+        resetTimer(ad);
+        updateStatCards(list);
+
+        // Notify server of currently playing ad
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'playing', adId: ad ? ad.id : null }));
+        }
+      }
+
+      function startWorkerTimer(dur) {
+        if (window.Worker) {
+          if (!timerWorker) {
+            const workerCode = `
+              let interval = null;
+              self.onmessage = (e) => {
+                if (e.data.type === 'start') {
+                  clearInterval(interval);
+                  let elapsed = 0;
+                  const dur = e.data.duration;
+                  interval = setInterval(() => {
+                    elapsed += 0.1;
+                    self.postMessage({ type: 'tick', percent: (elapsed / dur) * 100 });
+                    if (elapsed >= dur) {
+                      clearInterval(interval);
+                      self.postMessage({ type: 'done' });
+                    }
+                  }, 100);
+                } else if (e.data.type === 'stop') {
+                  clearInterval(interval);
+                }
+              };
+            `;
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            timerWorker = new Worker(URL.createObjectURL(blob));
+            timerWorker.onmessage = (e) => {
+              const bar = document.getElementById("progress-bar");
+              if (e.data.type === 'tick') {
+                if (bar) bar.style.width = e.data.percent + "%";
+              } else if (e.data.type === 'done') {
+                goTo(current + 1);
+              }
+            };
+          }
+          timerWorker.postMessage({ type: 'start', duration: dur });
+        }
+      }
+
+      function resetTimer(ad) {
+        clearInterval(interval);
+        if (timerWorker) {
+          timerWorker.postMessage({ type: 'stop' });
+        }
+        elapsed = 0;
+        const bar = document.getElementById("progress-bar");
+        if (bar) bar.style.width = "0%";
+
+        if (ad.type === "video" && ad.src) {
+          const slideEl = document.getElementById(`slide-${current}`);
+          const v = slideEl ? slideEl.querySelector("video") : null;
+          if (v) {
+            activeVideoEl = v;
+            
+            // Explicitly force source loading before playback
+            v.load();
+            v.currentTime = 0;
+            v.muted = ad.muted !== false;
+            
+            v.play().catch((err) => {
+              console.log("Autoplay audio blocked or video playback failed:", err);
+              v.muted = true;
+              v.play().catch(() => {});
+            });
+            
+            v.onended = () => goTo(current + 1);
+            
+            // Sync background timer with video duration
+            v.onloadedmetadata = () => {
+              startWorkerTimer(v.duration || ad.duration || 10);
+            };
+            if (v.readyState >= 1) {
+              startWorkerTimer(v.duration || ad.duration || 10);
+            }
+            
+            v.ontimeupdate = () => {
+              if (v.duration && bar)
+                bar.style.width = (v.currentTime / v.duration) * 100 + "%";
+            };
+          }
+          return;
+        }
+
+        const dur = ad.duration || 10;
+        startWorkerTimer(dur);
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement)
+          document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+      }
+      document
+        .getElementById("btn-fullscreen")
+        .addEventListener("click", toggleFullscreen);
+      const fsMobileBtn = document.getElementById("btn-fullscreen-mobile");
+      if (fsMobileBtn) fsMobileBtn.addEventListener("click", toggleFullscreen);
+
+      async function loadFromServer(preserveIndex) {
+        try {
+          const res = await fetch('/api/ads');
+          ADS = await res.json();
+        } catch (e) {
+          console.error("Failed to load playlist from server:", e);
+        }
+
+        const list = getActiveAds();
+        clearInterval(interval);
+        if (activeVideoEl) {
+          activeVideoEl.pause();
+          activeVideoEl = null;
+        }
+        buildSlides(list);
+        buildDots(list);
+        
+        if (!list.length) {
+          buildPanel(list);
+          broadcastNowPlaying(null);
+          updateStatCards(list);
+          return;
+        }
+        
+        current =
+          preserveIndex && preserveIndex < list.length ? preserveIndex : 0;
+          
+        buildPanel(list);
+        goTo(current);
+      }
+
+      // WebSocket listener
+      function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          console.log('Connected to WS server.');
+          ws.send(JSON.stringify({ type: 'register', role: 'screen' }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'reload') {
+              console.log('WebSocket reload triggered.');
+              loadFromServer(current);
+            }
+            if (msg.type === 'force-play') {
+              console.log('WebSocket force play trigger:', msg.adId);
+              const list = getActiveAds();
+              const idx = list.findIndex(a => a.id === msg.adId);
+              if (idx !== -1) {
+                goTo(idx);
+              }
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket connection closed. Reconnecting in 3 seconds...');
+          setTimeout(connectWebSocket, 3000);
+        };
+
+        ws.onerror = (err) => {
+          console.error('WebSocket error:', err);
+        };
+      }
+
+      window.addEventListener("storage", (e) => {
+        if (e.key === "lumina_screen_theme") {
+          document.documentElement.setAttribute(
+            "data-theme",
+            e.newValue || "dark",
+          );
+        }
+      });
+
+      // Periodically check scheduling & expiry status locally (every 5 seconds)
+      setInterval(() => {
+        const currentCount = document.querySelectorAll(".slide").length;
+        const freshList = getActiveAds();
+        if (freshList.length !== currentCount) {
+          loadFromServer(current);
+        }
+      }, 5000);
+
+      // Handle visibility changes (resume and sync state)
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          loadFromServer(current);
+        }
+      });
+
+      // PWA Install Button Prompt Handler
+      let deferredPrompt;
+      const installBtn = document.getElementById("btn-install");
+      const installBtnMobile = document.getElementById("btn-install-mobile");
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.style.display = "inline-flex";
+        if (installBtnMobile) installBtnMobile.style.display = "inline-flex";
+      });
+
+      function triggerInstall() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          console.log(`User choice: ${choiceResult.outcome}`);
+          deferredPrompt = null;
+          if (installBtn) installBtn.style.display = "none";
+          if (installBtnMobile) installBtnMobile.style.display = "none";
+        });
+      }
+
+      if (installBtn) installBtn.addEventListener("click", triggerInstall);
+      if (installBtnMobile) installBtnMobile.addEventListener("click", triggerInstall);
+
+      window.addEventListener("DOMContentLoaded", () => {
+        loadFromServer();
+        connectWebSocket();
+        
+        // PWA registration (On Air-Screens)
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Screens PWA ServiceWorker registered', reg))
+            .catch(err => console.log('Screens PWA ServiceWorker failed', err));
+        }
+
+        // Body click interaction helper to satisfy browser autoplay restrictions
+        document.body.addEventListener("click", () => {
+          console.log("User interaction recorded. Attempting video play/unmute.");
+          if (activeVideoEl) {
+            const list = getActiveAds();
+            const ad = list[current];
+            if (ad && ad.muted === false) {
+              activeVideoEl.muted = false;
+            }
+            activeVideoEl.play().catch(() => {});
+          }
+        });
+
+        setTimeout(
+          () => document.getElementById("loader").classList.add("hidden"),
+          1200,
+        );
+      });
+    </script>
+  </body>
+</html>

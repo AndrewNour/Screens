@@ -1,0 +1,19 @@
+{
+  "name": "On Air-Admin",
+  "short_name": "On Air-Admin",
+  "description": "Admin panel to manage On Air advertisements",
+  "start_url": "./admin.html",
+  "scope": "./admin.html",
+  "id": "/admin-pwa",
+  "display": "standalone",
+  "background_color": "#07090e",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "logo2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

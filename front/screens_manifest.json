@@ -1,0 +1,19 @@
+{
+  "name": "On Air-Screens",
+  "short_name": "On Air-Screens",
+  "description": "Display screen to play On Air advertisements",
+  "start_url": "./index.html",
+  "scope": "./index.html",
+  "id": "/screens-pwa",
+  "display": "standalone",
+  "background_color": "#080a0f",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "Untitled-1.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}

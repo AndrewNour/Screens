@@ -1,0 +1,2468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="manifest" href="admin_manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #07090e;
+        --bg2: #0d1017;
+        --surface: rgba(255, 255, 255, 0.04);
+        --surface2: rgba(255, 255, 255, 0.065);
+        --border: rgba(255, 255, 255, 0.08);
+        --border2: rgba(255, 255, 255, 0.13);
+        --accent: #6366f1;
+        --accent2: #a78bfa;
+        --accent-glow: rgba(99, 102, 241, 0.3);
+        --green: #22c55e;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+        --text: #f1f5f9;
+        --text-sm: rgba(241, 245, 249, 0.65);
+        --text-xs: rgba(241, 245, 249, 0.38);
+        --radius: 14px;
+        --sidebar-w: 240px;
+        --shadow: 0 4px 32px rgba(0, 0, 0, 0.45);
+        --modal-bg: #0f1219;
+        --toast-bg: #1a1d27;
+      }
+
+      html[data-theme="light"] {
+        --bg: #f0f2f7;
+        --bg2: #ffffff;
+        --surface: rgba(10, 12, 20, 0.04);
+        --surface2: rgba(10, 12, 20, 0.06);
+        --border: rgba(10, 12, 20, 0.1);
+        --border2: rgba(10, 12, 20, 0.15);
+        --text: #0d1017;
+        --text-sm: rgba(13, 16, 23, 0.78);
+        --text-xs: rgba(13, 16, 23, 0.58);
+        --modal-bg: #ffffff;
+        --toast-bg: #1c1f29;
+      }
+
+      html,
+      body {
+        width: 100%;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+
+      #layout {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      #sidebar {
+        width: var(--sidebar-w);
+        min-height: 100vh;
+        background: var(--bg2);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .sidebar-logo {
+        padding: 28px 22px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+        box-shadow: 0 0 16px var(--accent-glow);
+      }
+      .logo-text {
+        font-family: "Syne", sans-serif;
+        font-weight: 600;
+        letter-spacing: 2px;
+        font-size: 13px;
+        line-height: 1.3;
+      }
+      .logo-sub {
+        font-size: 9px;
+        color: var(--text-xs);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-top: 1px;
+      }
+
+      .nav-section {
+        padding: 18px 12px 8px;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--text-xs);
+        padding-left: 16px;
+      }
+      .nav-item {
+        margin: 2px 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-sm);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+      .nav-item:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .nav-item.active {
+        background: rgba(99, 102, 241, 0.18);
+        color: var(--text);
+      }
+      .nav-item svg {
+        opacity: 0.7;
+        flex-shrink: 0;
+      }
+      .nav-item.active svg {
+        opacity: 1;
+      }
+
+      #main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      #topbar {
+        height: 64px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 12px;
+        background: var(--bg2);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        flex-shrink: 0;
+        transition:
+          background 0.3s,
+          border-color 0.3s;
+      }
+      .topbar-title {
+        font-family: "Syne", sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+        flex: 1;
+        white-space: nowrap;
+      }
+      .topbar-time {
+        font-size: 12px;
+        color: var(--text-sm);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      .live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 6px var(--green);
+        animation: pulse 2s infinite;
+        flex-shrink: 0;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      .search-wrap {
+        position: relative;
+        width: 220px;
+        flex-shrink: 0;
+      }
+      .search-wrap svg {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      #search {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 8px 12px 8px 34px;
+        font-size: 13px;
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.3s,
+          color 0.3s;
+      }
+      #search:focus {
+        border-color: var(--accent);
+      }
+      #search::placeholder {
+        color: var(--text-xs);
+      }
+
+      #content {
+        padding: 24px;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .stat-card {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px;
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 0.2s,
+          border-color 0.2s,
+          background 0.3s;
+      }
+      .stat-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--border2);
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        filter: blur(32px);
+        opacity: 0.18;
+      }
+      .stat-card:nth-child(1)::before {
+        background: var(--accent);
+      }
+      .stat-card:nth-child(2)::before {
+        background: var(--green);
+      }
+      .stat-card:nth-child(3)::before {
+        background: var(--yellow);
+      }
+      .stat-card:nth-child(4)::before {
+        background: var(--accent2);
+      }
+      .stat-card:nth-child(5)::before {
+        background: #06b6d4;
+      }
+
+      .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        margin-bottom: 12px;
+        background: var(--surface);
+      }
+      .stat-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 6px;
+      }
+      .stat-value {
+        font-family: "Syne", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .stat-sub {
+        font-size: 11px;
+        color: var(--text-sm);
+        margin-top: 4px;
+      }
+      .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-top: 2px;
+      }
+      .stat-badge.image {
+        background: rgba(99, 102, 241, 0.18);
+        color: var(--accent2);
+      }
+      .stat-badge.video {
+        background: rgba(239, 68, 68, 0.18);
+        color: var(--red);
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+      .section-title {
+        font-family: "Syne", sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        flex: 1;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 18px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+        font-family: "Inter", sans-serif;
+        white-space: nowrap;
+        text-decoration: none;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #5254cc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px var(--accent-glow);
+      }
+      .btn-ghost {
+        background: var(--surface2);
+        color: var(--text-sm);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover {
+        background: var(--surface);
+        color: var(--text);
+        border-color: var(--border2);
+      }
+      .btn-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+      }
+      .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.25);
+      }
+      .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+      .btn-icon {
+        padding: 7px;
+        border-radius: 9px;
+      }
+
+      #ads-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .ad-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns: 28px 72px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.25s;
+        position: relative;
+        overflow: hidden;
+      }
+      .ad-card:hover {
+        background: var(--surface2);
+        border-color: var(--border2);
+      }
+      .ad-card.playing {
+        border-color: rgba(99, 102, 241, 0.5);
+        background: rgba(99, 102, 241, 0.07);
+      }
+      .ad-card.playing::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, var(--accent), var(--accent2));
+        border-radius: 999px 0 0 999px;
+      }
+      .ad-card.disabled {
+        opacity: 0.45;
+      }
+      .ad-card.expired {
+        opacity: 0.35;
+      }
+      .ad-card.dragging {
+        opacity: 0.5;
+        transform: scale(0.98);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      }
+      .ad-card.drag-over {
+        border-color: var(--accent);
+        background: rgba(99, 102, 241, 0.1);
+      }
+
+      .drag-handle {
+        cursor: grab;
+        color: var(--text-xs);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px;
+        border-radius: 6px;
+        transition:
+          color 0.2s,
+          background 0.2s;
+      }
+      .drag-handle:hover {
+        color: var(--text-sm);
+        background: var(--surface2);
+      }
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+
+      .ad-thumb {
+        width: 72px;
+        height: 50px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        position: relative;
+      }
+      .ad-thumb img,
+      .ad-thumb video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+      }
+      .ad-thumb .play-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(99, 102, 241, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+      }
+
+      .ad-info {
+        min-width: 0;
+      }
+      .ad-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .ad-meta {
+        font-size: 12px;
+        color: var(--text-sm);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        letter-spacing: 0.06em;
+        flex-shrink: 0;
+      }
+      .badge-active {
+        background: rgba(34, 197, 94, 0.2);
+        color: var(--green);
+      }
+      .badge-inactive {
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text-xs);
+      }
+      .badge-now {
+        background: rgba(99, 102, 241, 0.2);
+        color: var(--accent2);
+      }
+      .badge-video {
+        background: rgba(239, 68, 68, 0.18);
+        color: var(--red);
+      }
+      .badge-image {
+        background: rgba(99, 102, 241, 0.18);
+        color: var(--accent2);
+      }
+      .badge-expired {
+        background: rgba(245, 158, 11, 0.18);
+        color: var(--yellow);
+      }
+
+      .ad-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+
+      .duration-wrap {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--text-sm);
+      }
+      .duration-input {
+        width: 65px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 3px 2px;
+        font-size: 12px;
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        text-align: center;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .duration-input:focus {
+        border-color: var(--accent);
+      }
+
+      .toggle {
+        width: 36px;
+        height: 20px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        position: relative;
+        transition: background 0.25s;
+        flex-shrink: 0;
+      }
+      .toggle.on {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fff;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      }
+      .toggle.on::after {
+        transform: translateX(16px);
+      }
+
+      #modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.25s,
+          visibility 0.25s;
+        padding: 16px;
+        overflow-y: auto;
+      }
+      #modal-overlay.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      #modal {
+        background: var(--modal-bg);
+        border: 1px solid var(--border2);
+        border-radius: 20px;
+        padding: 28px;
+        width: 100%;
+        max-width: 520px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+        transform: scale(0.95) translateY(10px);
+        transition:
+          transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          background 0.3s;
+        margin: auto;
+      }
+      #modal-overlay.open #modal {
+        transform: scale(1) translateY(0);
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+      .modal-title {
+        font-family: "Syne", sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .modal-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-sm);
+        font-size: 18px;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .modal-close:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--red);
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-sm);
+        margin-bottom: 7px;
+        display: block;
+        letter-spacing: 0.04em;
+      }
+      .form-input {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.3s,
+          color 0.3s;
+      }
+      .form-input:focus {
+        border-color: var(--accent);
+      }
+      .form-input::placeholder {
+        color: var(--text-xs);
+      }
+      .form-hint {
+        font-size: 11px;
+        color: var(--text-xs);
+        margin-top: 6px;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .file-upload-area {
+        width: 100%;
+        border: 2px dashed var(--border2);
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        min-height: 100px;
+        margin-bottom: 4px;
+      }
+      .file-upload-area:hover,
+      .file-upload-area.drag-active {
+        border-color: var(--accent);
+        background: rgba(99, 102, 241, 0.06);
+      }
+      .file-upload-area input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
+      .file-upload-icon {
+        font-size: 28px;
+      }
+      .file-upload-text {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-sm);
+      }
+      .file-upload-hint {
+        font-size: 11px;
+        color: var(--text-xs);
+      }
+
+      #preview-area {
+        width: 100%;
+        height: 160px;
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--text-xs);
+        font-size: 13px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        position: relative;
+        background: #111;
+      }
+      #preview-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        display: none;
+        background: #111;
+      }
+      #preview-video {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        display: none;
+        background: #111;
+      }
+      #preview-emoji {
+        font-size: 40px;
+      }
+      #preview-hint {
+        font-size: 12px;
+        color: var(--text-xs);
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        pointer-events: none;
+        max-width: calc(100vw - 48px);
+      }
+      .toast-item {
+        background: var(--toast-bg);
+        border: 1px solid var(--border2);
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        animation: toastIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: auto;
+        word-break: break-word;
+      }
+      @keyframes toastIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .toast-item.out {
+        animation: toastOut 0.3s forwards;
+      }
+      @keyframes toastOut {
+        to {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 64px 20px;
+        color: var(--text-xs);
+      }
+      .empty-state .es-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      .empty-state h3 {
+        font-size: 16px;
+        color: var(--text-sm);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .empty-state p {
+        font-size: 13px;
+        max-width: 280px;
+        margin: 0 auto;
+      }
+
+      .now-playing-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* File size warning */
+      .file-size-info {
+        font-size: 11px;
+        color: var(--text-sm);
+        padding: 6px 10px;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 8px;
+        margin-top: 6px;
+      }
+
+      @media (max-width: 1024px) {
+        :root {
+          --sidebar-w: 200px;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+      @media (max-width: 768px) {
+        #layout {
+          flex-direction: column;
+        }
+        #sidebar {
+          width: 100%;
+          min-height: auto;
+          height: auto;
+          position: static;
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          padding: 10px 12px;
+          gap: 6px;
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+          overflow-x: auto;
+        }
+        .sidebar-logo {
+          padding: 0;
+          border: none;
+          flex-shrink: 0;
+        }
+        .nav-section {
+          display: none;
+        }
+        .nav-item {
+          padding: 7px 10px;
+          font-size: 12px;
+          flex-shrink: 0;
+        }
+        #topbar {
+          padding: 0 16px;
+          height: 56px;
+          flex-wrap: wrap;
+        }
+        .topbar-title {
+          font-size: 15px;
+        }
+        #content {
+          padding: 16px;
+        }
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+        .ad-card {
+          grid-template-columns: 24px 56px 1fr;
+          gap: 10px;
+        }
+        .ad-actions {
+          display: none;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+        .search-wrap {
+          width: 140px;
+        }
+      }
+      @media (max-width: 480px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .modal-actions {
+          flex-direction: column-reverse;
+        }
+        .modal-actions .btn {
+          width: 100%;
+          justify-content: center;
+        }
+        #modal {
+          padding: 20px 16px;
+        }
+        .topbar-time {
+          display: none;
+        }
+      }
+      @media (max-width: 360px) {
+        .search-wrap {
+          display: none;
+        }
+      }
+
+      ::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border2) transparent;
+      }
+
+      .confirm-dialog {
+        text-align: center;
+        padding: 8px 0 4px;
+      }
+      .confirm-dialog p {
+        font-size: 14px;
+        color: var(--text-sm);
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+      .day-btn {
+        transition: all 0.2s ease;
+      }
+      .day-btn.active-day {
+        background: var(--accent) !important;
+        color: #fff !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 10px var(--accent-glow);
+      }
+      .badge-inactive {
+        background: var(--surface2);
+        color: var(--text-sm);
+      }
+      select.form-input {
+        background-color: var(--bg2);
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="layout">
+      <nav id="sidebar">
+        <div class="sidebar-logo">
+          <div class="logo-icon">♱</div>
+          <div>
+            <div class="logo-text">ADMIN Dashboard</div>
+          </div>
+        </div>
+        <div class="nav-section">Management</div>
+        <a class="nav-item active" href="#">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="3" y="3" width="7" height="7" />
+            <rect x="14" y="3" width="7" height="7" />
+            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="14" width="7" height="7" />
+          </svg>
+          Dashboard
+        </a>
+        <a class="nav-item" href="#" id="sidebar-btn-install" style="display: none;" onclick="triggerInstall(); return false;">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Install App
+        </a>
+        <a
+          class="nav-item"
+          href="#"
+          onclick="
+            openModal();
+            return false;
+          "
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="16" />
+            <line x1="8" y1="12" x2="16" y2="12" />
+          </svg>
+          Add Advertisement
+        </a>
+        <a class="nav-item" href="index.html" target="_blank">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          Open Display Screen
+        </a>
+      </nav>
+
+      <div id="main">
+        <div id="topbar">
+          <div class="topbar-title">Advertisements</div>
+          <div class="search-wrap">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              id="search"
+              placeholder="Search ads…"
+              oninput="handleSearch(this.value)"
+            />
+          </div>
+          <div class="topbar-time">
+            <div class="live-dot"></div>
+            <span id="clock">—</span>
+          </div>
+          <button
+            class="btn btn-ghost btn-icon"
+            id="btn-theme"
+            title="Toggle Theme"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          </button>
+          <button
+            class="btn btn-ghost btn-icon"
+            id="btn-install"
+            title="Install App"
+            style="display: none;"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <a class="btn btn-ghost" href="index.html" target="_blank">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            Display
+          </a>
+          <button class="btn btn-primary" onclick="openModal()">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New Ad
+          </button>
+        </div>
+
+        <div id="content">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">📋</div>
+              <div class="stat-label">Total Ads</div>
+              <div class="stat-value" id="stat-total">—</div>
+              <div class="stat-sub">In playlist</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">✅</div>
+              <div class="stat-label">Active</div>
+              <div class="stat-value" id="stat-active">—</div>
+              <div class="stat-sub">Running now</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⏱</div>
+              <div class="stat-label">Total Duration</div>
+              <div class="stat-value" id="stat-duration">—</div>
+              <div class="stat-sub">Per full loop</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">▶️</div>
+              <div class="stat-label">Now Playing</div>
+              <div
+                class="stat-value now-playing-card"
+                id="stat-playing"
+                style="font-size: 13px; line-height: 1.3; margin-top: 4px"
+              ></div>
+              <div class="stat-sub" id="stat-playing-cat">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🕐</div>
+              <div class="stat-label">Last Saved</div>
+              <div
+                class="stat-value"
+                id="stat-saved"
+                style="font-size: 16px; margin-top: 6px"
+              >
+                —
+              </div>
+              <div class="stat-sub"></div>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <div class="section-title">Playlist Manager</div>
+            <span style="font-size: 12px; color: var(--text-xs)"
+              >Drag to reorder</span
+            >
+            <button class="btn btn-ghost btn-sm" onclick="load()">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+          <div id="ads-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal-overlay" onclick="closeModalOnOverlay(event)">
+      <div id="modal">
+        <div class="modal-header">
+          <div class="modal-title" id="modal-title">New Advertisement</div>
+          <div class="modal-close" onclick="closeModal()">×</div>
+        </div>
+
+        <div class="form-group" id="upload-section">
+          <label class="form-label"
+            >Media <span style="color: var(--accent2)">*</span> —
+            Required</label
+          >
+          <div class="file-upload-area" id="file-upload-area">
+            <input
+              type="file"
+              id="f-file"
+              accept="image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+              onchange="handleFileUpload(this)"
+            />
+            <div class="file-upload-icon">🖼</div>
+            <div class="file-upload-text">
+              Click or drag & drop an image or video
+            </div>
+            <div class="file-upload-hint">
+              Images: JPG/PNG/WebP · Videos: MP4/WebM/MOV
+            </div>
+          </div>
+          <div id="upload-progress" style="display: none; margin-top: 8px">
+            <div
+              style="
+                height: 3px;
+                background: var(--surface2);
+                border-radius: 4px;
+                overflow: hidden;
+              "
+            >
+              <div
+                id="upload-bar"
+                style="
+                  height: 100%;
+                  background: linear-gradient(
+                    90deg,
+                    var(--accent),
+                    var(--accent2)
+                  );
+                  width: 0%;
+                  transition: width 0.2s;
+                "
+              ></div>
+            </div>
+            <div
+              id="upload-status"
+              style="font-size: 11px; color: var(--text-xs); margin-top: 4px"
+            >
+              Reading file…
+            </div>
+          </div>
+        </div>
+
+        <div id="preview-area">
+          <img id="preview-img" src="" alt="Preview" />
+          <video id="preview-video" muted controls></video>
+          <div id="preview-emoji">🖼</div>
+          <div id="preview-hint">Media preview will appear here</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label"
+              >Title
+              <span style="color: var(--text-xs); font-weight: 400"
+                >(optional)</span
+              ></label
+            >
+            <input
+              class="form-input"
+              id="f-title"
+              placeholder="Advertisement title"
+            />
+          </div>
+          <div class="form-group">
+            <label class="form-label"
+              >Category
+              <span style="color: var(--text-xs); font-weight: 400"
+                >(optional)</span
+              ></label
+            >
+            <input
+              class="form-input"
+              id="f-category"
+              placeholder="e.g. Technology"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"
+            >Description
+            <span style="color: var(--text-xs); font-weight: 400"
+              >(optional)</span
+            ></label
+          >
+          <input
+            class="form-input"
+            id="f-desc"
+            placeholder="Short tagline or description"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" id="duration-group" style="grid-column: span 2;">
+            <label class="form-label"
+              >Display Duration (seconds)
+              <span style="color: var(--text-xs); font-weight: 400"
+                >(images only)</span
+              ></label
+            >
+            <input
+              class="form-input"
+              id="f-duration"
+              type="number"
+              min="3"
+              max="120"
+              placeholder="Default: 10"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" id="video-sound-group" style="display: none; margin-bottom: 16px;">
+          <label class="form-label">Video Sound Option</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="toggle" id="f-muted-toggle" title="Toggle Sound"></div>
+            <span id="f-muted-label" style="font-size: 13px; color: var(--text-sm);">Muted (no sound)</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label">Ad Details Display</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="toggle" id="f-details-toggle" title="Toggle Details"></div>
+            <span id="f-details-label" style="font-size: 13px; color: var(--text-sm);">Show Category & Description on screens</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label class="form-label">Display Days (optional - defaults to all days)</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px;" id="scheduling-days">
+            <button class="btn btn-ghost btn-sm day-btn" data-day="6" type="button">Sat</button>
+            <button class="btn btn-ghost btn-sm day-btn" data-day="0" type="button">Sun</button>
+            <button class="btn btn-ghost btn-sm day-btn" data-day="1" type="button">Mon</button>
+            <button class="btn btn-ghost btn-sm day-btn" data-day="2" type="button">Tue</button>
+            <button class="btn btn-ghost btn-sm day-btn" data-day="3" type="button">Wed</button>
+            <button class="btn btn-ghost btn-sm day-btn" data-day="4" type="button">Thu</button>
+            <button class="btn btn-ghost btn-sm day-btn" data-day="5" type="button">Fri</button>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-bottom: 16px;">
+          <div class="form-group">
+            <label class="form-label">Start Time (optional)</label>
+            <input type="time" class="form-input" id="f-start-time">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Time (optional)</label>
+            <input type="time" class="form-input" id="f-end-time">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label"
+            >Expiration Date & Time
+            <span style="color: var(--text-xs); font-weight: 400"
+              >(optional)</span
+            ></label
+          >
+          <input class="form-input" id="f-expires" type="datetime-local" />
+          <div class="form-hint">
+            The ad will automatically disappear from the playlist after this
+            date/time.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="f-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+
+        <div
+          id="confirm-delete-area"
+          class="confirm-dialog"
+          style="display: none"
+        >
+          <p>
+            Are you sure you want to delete <strong id="delete-name"></strong>?
+            This action cannot be undone.
+          </p>
+        </div>
+
+        <div class="modal-actions" id="modal-actions">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button
+            class="btn btn-primary"
+            id="modal-save-btn"
+            onclick="saveModal()"
+          >
+            Save Advertisement
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+      // ── THEME ──
+      (function () {
+        const saved = localStorage.getItem("lumina_admin_theme") || "dark";
+        document.documentElement.setAttribute("data-theme", saved);
+      })();
+      function toggleTheme() {
+        const cur =
+          document.documentElement.getAttribute("data-theme") || "dark";
+        const next = cur === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("lumina_admin_theme", next);
+      }
+      document
+        .getElementById("btn-theme")
+        .addEventListener("click", toggleTheme);
+
+      // ── CONSTANTS ──
+      const IMAGE_TYPES = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
+
+      let ads = [],
+        editId = null,
+        deleteId = null,
+        searchQuery = "",
+        dragSrc = null;
+      let pendingMedia = null; // { file: File, type: 'image'|'video', fileName, sizeMB }
+      
+      const BG_CLASSES = [
+        "ph-1", "ph-2", "ph-3", "ph-4", "ph-5", "ph-6", "ph-7", "ph-8", "ph-9", "ph-10"
+      ];
+      const GLOW_COLORS = [
+        "#6366f1", "#0ea5e9", "#ef4444", "#8b5cf6", "#3b82f6", "#d97706", "#a78bfa", "#06b6d4", "#f59e0b", "#0284c7"
+      ];
+      let lastSaved = null;
+      let modalMode = "add";
+      
+      // Video sound state
+      let isMuted = true;
+      const mutedToggle = document.getElementById("f-muted-toggle");
+      const mutedLabel = document.getElementById("f-muted-label");
+      
+      if (mutedToggle) {
+        mutedToggle.addEventListener("click", () => {
+          isMuted = !isMuted;
+          updateMutedUI();
+        });
+      }
+
+      function updateMutedUI() {
+        if (!mutedToggle) return;
+        if (isMuted) {
+          mutedToggle.classList.remove("on");
+          mutedLabel.textContent = "Muted (no sound)";
+        } else {
+          mutedToggle.classList.add("on");
+          mutedLabel.textContent = "Play with Audio (sound enabled)";
+        }
+      }
+
+      // Ad Details display state
+      let showDetails = true;
+      const detailsToggle = document.getElementById("f-details-toggle");
+      
+      if (detailsToggle) {
+        detailsToggle.addEventListener("click", () => {
+          showDetails = !showDetails;
+          updateDetailsUI();
+        });
+      }
+
+      function updateDetailsUI() {
+        if (!detailsToggle) return;
+        if (showDetails) {
+          detailsToggle.classList.add("on");
+        } else {
+          detailsToggle.classList.remove("on");
+        }
+      }
+
+      // Day scheduling state
+      let selectedDays = [];
+      document.querySelectorAll(".day-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const day = parseInt(btn.dataset.day);
+          if (selectedDays.includes(day)) {
+            selectedDays = selectedDays.filter(d => d !== day);
+            btn.classList.remove("active-day");
+          } else {
+            selectedDays.push(day);
+            btn.classList.add("active-day");
+          }
+        });
+      });
+
+      function resetDayButtons() {
+        selectedDays = [];
+        document.querySelectorAll(".day-btn").forEach(btn => {
+          btn.classList.remove("active-day");
+        });
+      }
+
+      function setDayButtons(daysArray) {
+        resetDayButtons();
+        if (!Array.isArray(daysArray)) return;
+        selectedDays = [...daysArray];
+        document.querySelectorAll(".day-btn").forEach(btn => {
+          const day = parseInt(btn.dataset.day);
+          if (selectedDays.includes(day)) {
+            btn.classList.add("active-day");
+          }
+        });
+      }
+
+      // WebSocket global variable
+      let ws = null;
+      let currentPlayingAdId = null;
+
+      async function saveVideoDuration(id, v) {
+        if (!v || !v.duration) return;
+        const durVal = Math.round(v.duration);
+        const ad = ads.find(a => a.id === id);
+        if (ad && ad.duration !== durVal) {
+          ad.duration = durVal;
+          try {
+            await fetch(`/api/ads/${id}/duration`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ duration: durVal })
+            });
+            updateStats();
+          } catch(e) {}
+        }
+      }
+
+      // Force play command
+      function forcePlayAd(id) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'force-play', adId: id }));
+          toast("▶ Force-play command sent to screens");
+        } else {
+          toast("⚠ WebSocket not connected");
+        }
+      }
+
+      // ── API INTEGRATION ──
+      async function load() {
+        try {
+          const res = await fetch('/api/ads');
+          ads = await res.json();
+          lastSaved = new Date(); // Update the last update time on load
+          render();
+          updateStats();
+        } catch (e) {
+          console.error("Failed to load ads:", e);
+          toast("⚠ Error connecting to server");
+        }
+      }
+
+      async function saveOrder() {
+        try {
+          const ids = ads.map(a => a.id);
+          const res = await fetch('/api/ads/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids })
+          });
+          if (res.ok) {
+            lastSaved = new Date();
+            updateStats();
+            toast("↕ Order updated");
+          } else {
+            toast("⚠ Failed to save order on server");
+          }
+        } catch (e) {
+          console.error(e);
+          toast("⚠ Error connecting to server");
+        }
+      }
+
+      function isExpired(ad) {
+        if (!ad.expiresAt) return false;
+        return new Date(ad.expiresAt).getTime() < Date.now();
+      }
+
+      function filteredAds() {
+        if (!searchQuery) return ads;
+        const q = searchQuery.toLowerCase();
+        return ads.filter(
+          (a) =>
+            (a.title || "").toLowerCase().includes(q) ||
+            (a.category || "").toLowerCase().includes(q),
+        );
+      }
+
+      // ── RENDER ──
+      function render() {
+        if (document.activeElement && document.activeElement.classList.contains("duration-input")) {
+          return;
+        }
+        const list = document.getElementById("ads-list");
+        const data = filteredAds();
+        if (!data.length) {
+          list.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><h3>No ads yet</h3><p>Add your first advertisement to start the playlist.</p></div>`;
+          return;
+        }
+        
+        list.innerHTML = "";
+
+        data.forEach((ad) => {
+          const expired = isExpired(ad);
+          const scheduled = isScheduledNow(ad);
+          const playing = ad.id === currentPlayingAdId; // Precise dynamic playing highlight!
+          const div = document.createElement("div");
+          div.className = `ad-card${playing ? " playing" : ""}${!ad.active ? " disabled" : ""}${expired ? " expired" : ""}${ad.active && !expired && !scheduled ? " disabled" : ""}`;
+          div.draggable = true;
+          div.dataset.id = ad.id;
+
+          const isVideo = ad.type === "video";
+          const displayTitle = ad.title || `Advertisement`;
+
+          // Format days of week
+          let scheduleText = "";
+          if (ad.days && ad.days.length > 0) {
+            const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const sortedDays = [...ad.days].sort((a,b) => a-b);
+            scheduleText = "Days: " + sortedDays.map(d => dayNames[d]).join(', ');
+          }
+          if (ad.startTime && ad.endTime) {
+            scheduleText += (scheduleText ? " · " : "") + `Time: ${ad.startTime}-${ad.endTime}`;
+          }
+
+          div.innerHTML = `
+            <div class="drag-handle" title="Drag to reorder">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
+            </div>
+            <div class="ad-thumb">
+              ${
+                ad.src
+                  ? isVideo
+                    ? `<video muted preload="metadata" src="${ad.src}" onloadedmetadata="saveVideoDuration(${ad.id}, this)"></video>`
+                    : `<img alt="" src="${ad.src}" onerror="this.style.display='none'">`
+                  : `<span>🖼</span>`
+              }
+              ${playing ? `<div class="play-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg></div>` : ""}
+            </div>
+            <div class="ad-info">
+              <div class="ad-title">
+                ${displayTitle}
+                ${playing ? '<span class="badge badge-now">NOW</span>' : ""}
+                <span class="badge ${isVideo ? "badge-video" : "badge-image"}">${isVideo ? "Video" : "Image"}</span>
+                <span class="badge ${ad.active ? "badge-active" : "badge-inactive"}">${ad.active ? "Active" : "Inactive"}</span>
+                ${expired ? '<span class="badge badge-expired">Expired</span>' : ""}
+                ${ad.active && !expired && !scheduled ? '<span class="badge badge-expired" style="background:rgba(245,158,11,0.1);color:#f59e0b;">Off Schedule</span>' : ""}
+              </div>
+              <div class="ad-meta">
+                <span>${ad.category || "—"}</span>
+                <span>·</span>
+                ${
+                  isVideo
+                    ? `<span>🎬 Full playback · ${ad.muted ? "🔇 Muted" : "🔊 Sound ON"}</span>`
+                    : `<div class="duration-wrap">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      <input draggable="false" onkeydown="event.stopPropagation()" onkeypress="event.stopPropagation()" class="duration-input" type="number" value="${ad.duration || 10}" min="3" max="120"
+                        onfocus="this.closest('.ad-card').setAttribute('draggable', 'false')"
+                        onblur="this.closest('.ad-card').setAttribute('draggable', 'true')"
+                        onchange="updateDuration(${ad.id}, this.value)" onclick="event.stopPropagation()" title="Duration (seconds)">
+                      <span>sec</span>
+                    </div>`
+                }
+                ${ad.expiresAt ? `<span>· Expires ${new Date(ad.expiresAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>` : ""}
+                ${scheduleText ? `<span style="display:block;width:100%;color:var(--accent2);margin-top:2px;font-size:11px;">⏰ ${scheduleText}</span>` : ""}
+                ${ad.showDetails !== false ? `<span style="display:block;width:100%;color:var(--green);font-size:11px;margin-top:1px;">📋 Details Visible on screens</span>` : ""}
+              </div>
+            </div>
+            <div class="ad-actions">
+              <div class="toggle${ad.active ? " on" : ""}" title="${ad.active ? "Disable" : "Enable"}" onclick="toggleActive(${ad.id})"></div>
+              <button class="btn btn-ghost btn-sm btn-icon" style="color:var(--green);" title="Play Now" onclick="forcePlayAd(${ad.id})">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" title="Edit" onclick="openEdit(${ad.id})">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+              <button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="confirmDelete(${ad.id})">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>
+          `;
+
+          // Drag events
+          div.addEventListener("dragstart", (e) => {
+            if (e.target.closest('input') || e.target.closest('select') || e.target.closest('button')) {
+              e.preventDefault();
+              return;
+            }
+            dragSrc = ad.id;
+            div.classList.add("dragging");
+            e.dataTransfer.effectAllowed = "move";
+          });
+          div.addEventListener("dragend", () => {
+            div.classList.remove("dragging");
+            document
+              .querySelectorAll(".drag-over")
+              .forEach((el) => el.classList.remove("drag-over"));
+          });
+          div.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            div.classList.add("drag-over");
+          });
+          div.addEventListener("dragleave", () =>
+            div.classList.remove("drag-over"),
+          );
+          div.addEventListener("drop", (e) => {
+            e.preventDefault();
+            div.classList.remove("drag-over");
+            if (dragSrc === ad.id) return;
+            const fromIdx = ads.findIndex((a) => a.id === dragSrc);
+            const toIdx = ads.findIndex((a) => a.id === ad.id);
+            if (fromIdx < 0 || toIdx < 0) return;
+            const [item] = ads.splice(fromIdx, 1);
+            ads.splice(toIdx, 0, item);
+            saveOrder();
+            render();
+            updateStats();
+          });
+
+          list.appendChild(div);
+        });
+      }
+
+      function isScheduledNow(ad) {
+        const now = new Date();
+        
+        // Expiry check
+        if (isExpired(ad)) return false;
+
+        // Days of week check
+        if (ad.days && ad.days.length > 0) {
+          const currentDay = now.getDay();
+          if (!ad.days.includes(currentDay)) return false;
+        }
+
+        // Time of day check
+        if (ad.startTime && ad.endTime) {
+          const currentHM = now.toTimeString().slice(0, 5); // "HH:MM"
+          if (currentHM < ad.startTime || currentHM > ad.endTime) return false;
+        }
+
+        return true;
+      }
+
+      function updateStats() {
+        const total = ads.length;
+        const liveAds = ads.filter((a) => a.active && !isExpired(a) && isScheduledNow(a));
+        const active = liveAds.length;
+        const dur = liveAds.reduce((s, a) => s + Number(a.duration || 10), 0);
+        
+        document.getElementById("stat-total").textContent = total;
+        document.getElementById("stat-active").textContent = active;
+        document.getElementById("stat-duration").textContent = dur + "s+";
+        
+        const playingEl = document.getElementById("stat-playing");
+        const catEl = document.getElementById("stat-playing-cat");
+        
+        if (currentPlayingAdId !== null) {
+          const playingAd = ads.find(a => a.id === currentPlayingAdId);
+          if (playingAd) {
+            playingEl.innerHTML = `<span>${(playingAd.title || "Untitled Ad").split("—")[0].trim()}</span> <span class="stat-badge ${playingAd.type === "video" ? "video" : "image"}">${playingAd.type === "video" ? "Video" : "Image"}</span>`;
+            catEl.textContent = playingAd.category || "—";
+          } else {
+            playingEl.innerHTML = `<span>No advertisement is currently playing.</span>`;
+            catEl.textContent = "—";
+          }
+        } else {
+          playingEl.innerHTML = `<span>No advertisement is currently playing.</span>`;
+          catEl.textContent = "—";
+        }
+        
+        document.getElementById("stat-saved").textContent = lastSaved
+          ? lastSaved.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit"
+            })
+          : "Synced";
+      }
+
+      async function toggleActive(id) {
+        try {
+          const res = await fetch(`/api/ads/${id}/active`, {
+            method: 'PUT'
+          });
+          if (res.ok) {
+            const ad = ads.find((a) => a.id === id);
+            if (ad) {
+              ad.active = !ad.active;
+              toast(ad.active ? "✅ Ad enabled" : "⏸ Ad disabled");
+              render();
+              updateStats();
+            }
+          }
+        } catch (e) {
+          toast("⚠ Connection error");
+        }
+      }
+
+      async function updateDuration(id, val) {
+        const durationVal = Math.max(3, Math.min(120, Number(val)));
+        try {
+          const res = await fetch(`/api/ads/${id}/duration`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ duration: durationVal })
+          });
+          if (res.ok) {
+            const ad = ads.find((a) => a.id === id);
+            if (ad) ad.duration = durationVal;
+            updateStats();
+          }
+        } catch (e) {
+          toast("⚠ Failed to update duration");
+        }
+      }
+
+      function handleSearch(q) {
+        searchQuery = q;
+        render();
+      }
+
+      // ── FILE UPLOAD — reads to Object URL for previews, uploads directly ──
+      function handleFileUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const isImage = IMAGE_TYPES.includes(file.type.toLowerCase());
+        const isVideo = VIDEO_TYPES.includes(file.type.toLowerCase());
+
+        if (!isImage && !isVideo) {
+          toast("⚠ Unsupported file type. Use JPG, PNG, WebP, MP4, WebM, or MOV.");
+          input.value = "";
+          return;
+        }
+
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > 300) {
+          toast(`⚠ File too large (${sizeMB.toFixed(1)}MB). Max upload limit is 300MB.`);
+          input.value = "";
+          return;
+        }
+
+        const previewURL = URL.createObjectURL(file);
+        const mediaType = isVideo ? "video" : "image";
+
+        pendingMedia = {
+          file: file,
+          type: mediaType,
+          fileName: file.name,
+          sizeMB
+        };
+        showPreview(previewURL, mediaType);
+
+        document.getElementById("duration-group").style.display = isVideo ? "none" : "";
+        document.getElementById("video-sound-group").style.display = isVideo ? "block" : "none";
+
+        const area = document.getElementById("file-upload-area");
+        area.querySelector(".file-upload-text").textContent = file.name;
+        area.querySelector(".file-upload-hint").textContent =
+          sizeMB.toFixed(2) + " MB · " + (isVideo ? "Video" : "Image");
+        area.querySelector(".file-upload-icon").textContent = "✅";
+      }
+
+      function showPreview(src, type) {
+        const img = document.getElementById("preview-img");
+        const vid = document.getElementById("preview-video");
+        const emoji = document.getElementById("preview-emoji");
+        const hint = document.getElementById("preview-hint");
+
+        img.style.display = "none";
+        vid.style.display = "none";
+        vid.pause();
+        vid.src = "";
+
+        if (src && type === "video") {
+          vid.src = src;
+          vid.style.display = "block";
+          emoji.style.display = "none";
+          hint.style.display = "none";
+        } else if (src) {
+          img.src = "";
+          requestAnimationFrame(() => {
+            img.onload = () => {
+              img.style.display = "block";
+              emoji.style.display = "none";
+              hint.style.display = "none";
+            };
+            img.src = src;
+          });
+        } else {
+          emoji.style.display = "";
+          hint.style.display = "";
+        }
+      }
+
+      function resetUploadArea() {
+        const area = document.getElementById("file-upload-area");
+        area.querySelector(".file-upload-text").textContent = "Click or drag & drop an image or video";
+        area.querySelector(".file-upload-hint").textContent = "Images: JPG/PNG/WebP · Videos: MP4/WebM/MOV";
+        area.querySelector(".file-upload-icon").textContent = "🖼";
+        document.getElementById("f-file").value = "";
+        pendingMedia = null;
+        document.getElementById("duration-group").style.display = "";
+        document.getElementById("video-sound-group").style.display = "none";
+        document.getElementById("upload-progress").style.display = "none";
+        showPreview(null, null);
+      }
+
+      // Drag & drop on upload area
+      document.addEventListener("DOMContentLoaded", () => {
+        const area = document.getElementById("file-upload-area");
+        if (area) {
+          area.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            area.classList.add("drag-active");
+          });
+          area.addEventListener("dragleave", () =>
+            area.classList.remove("drag-active"),
+          );
+          area.addEventListener("drop", (e) => {
+            e.preventDefault();
+            area.classList.remove("drag-active");
+            const file = e.dataTransfer.files[0];
+            if (file) {
+              try {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                document.getElementById("f-file").files = dt.files;
+                handleFileUpload(document.getElementById("f-file"));
+              } catch (err) {
+                toast("⚠ Drop failed. Please click to select file.");
+              }
+            }
+          });
+        }
+        
+        load();
+        connectWebSocket();
+        
+        // PWA registration (On Air-Admin)
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Admin PWA ServiceWorker registered', reg))
+            .catch(err => console.log('Admin PWA ServiceWorker failed', err));
+        }
+      });
+
+      // ── MODAL ──
+      function toLocalInputValue(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+
+      function openModal() {
+        modalMode = "add";
+        editId = null;
+        deleteId = null;
+        document.getElementById("modal-title").textContent = "New Advertisement";
+        document.getElementById("f-title").value = "";
+        document.getElementById("f-category").value = "";
+        document.getElementById("f-desc").value = "";
+        document.getElementById("f-duration").value = "";
+        document.getElementById("f-expires").value = "";
+        document.getElementById("f-active").value = "true";
+        
+        // Reset scheduling
+        resetDayButtons();
+        document.getElementById("f-start-time").value = "";
+        document.getElementById("f-end-time").value = "";
+        
+        // Reset details display
+        showDetails = true;
+        updateDetailsUI();
+
+        // Reset video sound
+        isMuted = true;
+        updateMutedUI();
+
+        resetUploadArea();
+        document.getElementById("upload-section").style.display = "";
+        document.getElementById("confirm-delete-area").style.display = "none";
+        document
+          .querySelectorAll("#modal .form-group, #preview-area")
+          .forEach((el) => (el.style.display = ""));
+        document.getElementById("video-sound-group").style.display = "none"; // Hide initially until video uploaded
+        document.getElementById("modal-actions").innerHTML = `
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="modal-save-btn" onclick="saveModal()">Save Advertisement</button>
+        `;
+        document.getElementById("modal-overlay").classList.add("open");
+      }
+
+      function openEdit(id) {
+        const ad = ads.find((a) => a.id === id);
+        if (!ad) return;
+        modalMode = "edit";
+        editId = id;
+        deleteId = null;
+        document.getElementById("modal-title").textContent = "Edit Advertisement";
+        document.getElementById("f-title").value = ad.title || "";
+        document.getElementById("f-category").value = ad.category || "";
+        document.getElementById("f-desc").value = ad.desc || "";
+        document.getElementById("f-duration").value = ad.duration || "";
+        document.getElementById("f-expires").value = toLocalInputValue(ad.expiresAt);
+        document.getElementById("f-active").value = ad.active ? "true" : "false";
+
+        // Load scheduling
+        setDayButtons(ad.days || []);
+        document.getElementById("f-start-time").value = ad.startTime || "";
+        document.getElementById("f-end-time").value = ad.endTime || "";
+
+        // Load details display
+        showDetails = ad.showDetails !== false;
+        updateDetailsUI();
+
+        resetUploadArea();
+        document.getElementById("duration-group").style.display = ad.type === "video" ? "none" : "";
+        document.getElementById("video-sound-group").style.display = ad.type === "video" ? "block" : "none";
+        
+        isMuted = ad.muted !== false;
+        updateMutedUI();
+
+        if (ad.src) {
+          showPreview(ad.src, ad.type);
+          const area = document.getElementById("file-upload-area");
+          area.querySelector(".file-upload-icon").textContent = "🔄";
+          area.querySelector(".file-upload-text").textContent = "Click to replace media";
+          area.querySelector(".file-upload-hint").textContent = "Current media shown in preview";
+        }
+
+        document.getElementById("upload-section").style.display = "";
+        document.getElementById("confirm-delete-area").style.display = "none";
+        document
+          .querySelectorAll("#modal .form-group, #preview-area")
+          .forEach((el) => {
+            if (el.id === "video-sound-group") {
+              el.style.display = ad.type === "video" ? "block" : "none";
+            } else {
+              el.style.display = "";
+            }
+          });
+
+        document.getElementById("modal-actions").innerHTML = `
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="modal-save-btn" onclick="saveModal()">Update Advertisement</button>
+        `;
+        document.getElementById("modal-overlay").classList.add("open");
+      }
+
+      function confirmDelete(id) {
+        const ad = ads.find((a) => a.id === id);
+        if (!ad) return;
+        modalMode = "delete";
+        deleteId = id;
+        document.getElementById("modal-title").textContent = "Delete Advertisement";
+        document.getElementById("delete-name").textContent = '"' + (ad.title || "this ad") + '"';
+        document
+          .querySelectorAll("#modal .form-group, #preview-area")
+          .forEach((el) => (el.style.display = "none"));
+        document.getElementById("confirm-delete-area").style.display = "";
+        document.getElementById("modal-actions").innerHTML = `
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-danger" onclick="doDelete()">Delete Permanently</button>
+        `;
+        document.getElementById("modal-overlay").classList.add("open");
+      }
+
+      async function doDelete() {
+        try {
+          const res = await fetch(`/api/ads/${deleteId}`, {
+            method: 'DELETE'
+          });
+          if (res.ok) {
+            toast("🗑 Advertisement deleted");
+            closeModal();
+            load();
+          } else {
+            toast("⚠ Failed to delete");
+          }
+        } catch (e) {
+          toast("⚠ Connection error");
+        }
+      }
+
+      async function saveModal() {
+        if (modalMode === "delete") return;
+
+        if (modalMode === "add" && !pendingMedia) {
+          toast("⚠ Please upload an image or video first");
+          return;
+        }
+
+        const title = document.getElementById("f-title").value.trim();
+        const category = document.getElementById("f-category").value.trim();
+        const desc = document.getElementById("f-desc").value.trim();
+        const duration = document.getElementById("f-duration").value;
+        const expiresVal = document.getElementById("f-expires").value;
+        const expiresAt = expiresVal ? new Date(expiresVal).toISOString() : '';
+        const active = document.getElementById("f-active").value;
+        
+        const startTime = document.getElementById("f-start-time").value;
+        const endTime = document.getElementById("f-end-time").value;
+
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("category", category);
+        formData.append("desc", desc);
+        formData.append("duration", duration || 10);
+        formData.append("expiresAt", expiresAt);
+        formData.append("active", active);
+        formData.append("muted", isMuted);
+        formData.append("showDetails", showDetails);
+        formData.append("startTime", startTime);
+        formData.append("endTime", endTime);
+        formData.append("days", JSON.stringify(selectedDays));
+
+        if (pendingMedia && pendingMedia.file) {
+          formData.append("media", pendingMedia.file);
+        }
+
+        const saveBtn = document.getElementById("modal-save-btn");
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+
+        try {
+          let url = '/api/ads';
+          let method = 'POST';
+          if (modalMode === 'edit') {
+            url = `/api/ads/${editId}`;
+            method = 'PUT';
+          }
+
+          const res = await fetch(url, {
+            method: method,
+            body: formData
+          });
+
+          if (res.ok) {
+            toast(modalMode === 'edit' ? "✏️ Advertisement updated" : "✅ Advertisement added");
+            closeModal();
+            load();
+          } else {
+            const errData = await res.json();
+            toast(`⚠ Save failed: ${errData.error || 'Server error'}`);
+          }
+        } catch (e) {
+          console.error(e);
+          toast("⚠ Connection error to server");
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = modalMode === 'edit' ? "Update Advertisement" : "Save Advertisement";
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("modal-overlay").classList.remove("open");
+        pendingMedia = null;
+      }
+      function closeModalOnOverlay(e) {
+        if (e.target === document.getElementById("modal-overlay")) closeModal();
+      }
+
+      function toast(msg, dur = 3500) {
+        const wrap = document.getElementById("toast");
+        const el = document.createElement("div");
+        el.className = "toast-item";
+        el.textContent = msg;
+        wrap.appendChild(el);
+        setTimeout(() => {
+          el.classList.add("out");
+          el.addEventListener("animationend", () => el.remove(), {
+            once: true,
+          });
+        }, dur);
+      }
+
+      function tick() {
+        document.getElementById("clock").textContent =
+          new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+      }
+      setInterval(tick, 1000);
+      tick();
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeModal();
+        if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+          e.preventDefault();
+          document.getElementById("search").focus();
+        }
+      });
+
+      function updatePlayingHighlight(adId) {
+        currentPlayingAdId = adId;
+        updateStats();
+
+        // Highlight card in playlist manager without destructive re-render
+        document.querySelectorAll(".ad-card").forEach((card) => {
+          const cardId = Number(card.dataset.id);
+          const titleEl = card.querySelector(".ad-title");
+          const thumbEl = card.querySelector(".ad-thumb");
+          const nowBadge = card.querySelector(".badge-now");
+          const playOverlay = card.querySelector(".play-overlay");
+
+          if (cardId === adId) {
+            card.classList.add("playing");
+            if (titleEl && !nowBadge) {
+              const badge = document.createElement("span");
+              badge.className = "badge badge-now";
+              badge.textContent = "NOW";
+              titleEl.insertBefore(badge, titleEl.firstChild);
+            }
+            if (thumbEl && !playOverlay) {
+              const overlay = document.createElement("div");
+              overlay.className = "play-overlay";
+              overlay.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>`;
+              thumbEl.appendChild(overlay);
+            }
+          } else {
+            card.classList.remove("playing");
+            if (nowBadge) nowBadge.remove();
+            if (playOverlay) playOverlay.remove();
+          }
+        });
+      }
+
+      // WebSocket listener
+      function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        ws = new WebSocket(wsUrl);
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            if (msg.type === 'reload') {
+              console.log('WebSocket reload triggered.');
+              load();
+            }
+            if (msg.type === 'playing') {
+              console.log('WebSocket playing update:', msg.adId);
+              updatePlayingHighlight(msg.adId);
+            }
+          } catch (err) {
+            console.error('Error parsing WebSocket message:', err);
+          }
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket connection closed. Reconnecting in 3 seconds...');
+          setTimeout(connectWebSocket, 3000);
+        };
+
+        ws.onerror = (err) => {
+          console.error('WebSocket error:', err);
+        };
+      }
+
+      window.addEventListener("storage", (e) => {
+        if (e.key === "lumina_admin_theme") {
+          document.documentElement.setAttribute(
+            "data-theme",
+            e.newValue || "dark",
+          );
+        }
+      });
+
+      // Auto-expire/schedule check locally every 5s to keep UI updated
+      setInterval(() => {
+        render();
+        updateStats();
+      }, 5000);
+
+      // PWA Install Button Prompt Handler
+      let deferredPrompt;
+      const installBtn = document.getElementById("btn-install");
+      const sidebarInstallBtn = document.getElementById("sidebar-btn-install");
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.style.display = "inline-flex";
+        if (sidebarInstallBtn) sidebarInstallBtn.style.display = "flex";
+      });
+
+      function triggerInstall() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          console.log(`User choice: ${choiceResult.outcome}`);
+          deferredPrompt = null;
+          if (installBtn) installBtn.style.display = "none";
+          if (sidebarInstallBtn) sidebarInstallBtn.style.display = "none";
+        });
+      }
+
+      if (installBtn) {
+        installBtn.addEventListener("click", triggerInstall);
+      }
+    </script>
+  </body>
+</html>

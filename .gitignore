@@ -1,0 +1,19 @@
+# Dependency folders
+node_modules/
+back/node_modules/
+
+# User uploads & database
+uploads/
+back/uploads/*
+!back/uploads/.gitkeep
+back/ads.json
+
+# Environment and system files
+.env
+*.log
+.DS_Store
+Thumbs.db
+
+# Agent files
+.agents/
+.gemini/
