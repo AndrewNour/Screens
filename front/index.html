@@ -940,6 +940,7 @@
         </div>
       </div>
     </div>
+    <script src="/socket.io/socket.io.js"></script>
     <script>
       // ── INDEXEDDB SETUP ──
       const DB_NAME = 'OnAirDB';
@@ -1250,8 +1251,8 @@
         updateStatCards(list);
 
         // Notify server of currently playing ad
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'playing', adId: ad ? ad.id : null }));
+        if (socket && socket.connected) {
+          socket.emit('message', { type: 'playing', adId: ad ? ad.id : null });
         }
       }
 
@@ -1454,26 +1455,24 @@
         }
       }
 
-      // WebSocket listener
+      // Socket.io listener
+      let socket = null;
       function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}`;
-        ws = new WebSocket(wsUrl);
+        socket = io();
 
-        ws.onopen = () => {
-          console.log('Connected to WS server.');
-          ws.send(JSON.stringify({ type: 'register', role: 'screen' }));
-        };
+        socket.on('connect', () => {
+          console.log('Connected to Socket.io server.');
+          socket.emit('message', { type: 'register', role: 'screen' });
+        });
 
-        ws.onmessage = (event) => {
+        socket.on('message', (msg) => {
           try {
-            const msg = JSON.parse(event.data);
             if (msg.type === 'reload') {
-              console.log('WebSocket reload triggered.');
+              console.log('Socket.io reload triggered.');
               loadFromServer(current);
             }
             if (msg.type === 'force-play') {
-              console.log('WebSocket force play trigger:', msg.adId);
+              console.log('Socket.io force play trigger:', msg.adId);
               const list = getActiveAds();
               const idx = list.findIndex(a => a.id === msg.adId);
               if (idx !== -1) {
@@ -1481,18 +1480,13 @@
               }
             }
           } catch (err) {
-            console.error('Error parsing WebSocket message:', err);
+            console.error('Error handling Socket.io message:', err);
           }
-        };
+        });
 
-        ws.onclose = () => {
-          console.log('WebSocket connection closed. Reconnecting in 3 seconds...');
-          setTimeout(connectWebSocket, 3000);
-        };
-
-        ws.onerror = (err) => {
-          console.error('WebSocket error:', err);
-        };
+        socket.on('disconnect', () => {
+          console.log('Socket.io connection closed.');
+        });
       }
 
       window.addEventListener("storage", (e) => {

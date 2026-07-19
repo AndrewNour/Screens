@@ -1,6 +1,6 @@
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws');
+const { Server } = require('socket.io');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -8,7 +8,7 @@ const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const io = new Server(server, { cors: { origin: '*' } });
 
 const PORT = process.env.PORT || 7860;
 const DATA_FILE = path.join(__dirname, 'ads.json');
@@ -91,14 +91,9 @@ function deleteMediaFile(filePath) {
   }
 }
 
-// WebSocket broadcast
+// Socket.io broadcast
 function broadcast(data) {
-  const message = JSON.stringify(data);
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
+  io.emit('message', data);
 }
 
 // REST APIs
@@ -365,23 +360,22 @@ setInterval(() => {
   }
 }, 5000);
 
-// WebSocket connection handler
-wss.on('connection', (ws) => {
-  console.log('Client connected to WebSocket.');
+// Socket.io connection handler
+io.on('connection', (socket) => {
+  console.log('Client connected to Socket.io.');
   
-  ws.isScreen = false;
+  socket.isScreen = false;
   
   // Send current playing ad state to new client on connect
-  ws.send(JSON.stringify({ type: 'playing', adId: currentPlayingAdId }));
+  socket.emit('message', { type: 'playing', adId: currentPlayingAdId });
 
-  ws.on('message', (data) => {
+  socket.on('message', (msg) => {
     try {
-      const msg = JSON.parse(data);
       if (msg.type === 'register' && msg.role === 'screen') {
-        ws.isScreen = true;
-        console.log('Screen registered on WebSocket.');
+        socket.isScreen = true;
+        console.log('Screen registered on Socket.io.');
         if (currentPlayingAdId !== null) {
-          ws.send(JSON.stringify({ type: 'force-play', adId: currentPlayingAdId }));
+          socket.emit('message', { type: 'force-play', adId: currentPlayingAdId });
         }
       }
       if (msg.type === 'playing') {
@@ -394,20 +388,21 @@ wss.on('connection', (ws) => {
         broadcast({ type: 'playing', adId: msg.adId });
       }
     } catch (err) {
-      console.error('Error parsing WS message:', err);
+      console.error('Error processing Socket.io message:', err);
     }
   });
 
-  ws.on('close', () => {
-    console.log('Client disconnected.');
-    if (ws.isScreen) {
+  socket.on('disconnect', () => {
+    console.log('Client disconnected from Socket.io.');
+    if (socket.isScreen) {
       // Check if there are any screens left
       let screenCount = 0;
-      wss.clients.forEach((client) => {
-        if (client.isScreen && client.readyState === WebSocket.OPEN) {
+      const sockets = io.sockets.sockets;
+      for (const [id, s] of sockets) {
+        if (s.isScreen) {
           screenCount++;
         }
-      });
+      }
       if (screenCount === 0) {
         console.log('All screens disconnected. Setting current playing ad to null.');
         currentPlayingAdId = null;
