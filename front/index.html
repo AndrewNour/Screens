@@ -956,6 +956,25 @@
         return false;
       };
 
+      // Service Worker Cleanup: Automatically unregister the old root service worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (let registration of registrations) {
+            const scope = registration.scope;
+            const scriptUrl = registration.active ? registration.active.scriptURL : '';
+            // If there's an old service worker on the root scope '/' or old sw.js, unregister it
+            if (scope === window.location.origin + '/' || scriptUrl.endsWith('/sw.js')) {
+              registration.unregister().then((success) => {
+                if (success) {
+                  console.log('Unregistered obsolete root service worker:', scope);
+                  window.location.reload();
+                }
+              });
+            }
+          }
+        });
+      }
+
       // ── INDEXEDDB SETUP ──
       const DB_NAME = 'OnAirDB';
       const DB_VERSION = 1;
