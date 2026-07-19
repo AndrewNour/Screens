@@ -425,13 +425,13 @@
         border-radius: 9px;
       }
 
-      #ads-list {
+      #playlist-list {
         display: flex;
         flex-direction: column;
         gap: 8px;
       }
 
-      .ad-card {
+      .playlist-item-card {
         background: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius);
@@ -444,15 +444,15 @@
         position: relative;
         overflow: hidden;
       }
-      .ad-card:hover {
+      .playlist-item-card:hover {
         background: var(--surface2);
         border-color: var(--border2);
       }
-      .ad-card.playing {
+      .playlist-item-card.playing {
         border-color: rgba(99, 102, 241, 0.5);
         background: rgba(99, 102, 241, 0.07);
       }
-      .ad-card.playing::before {
+      .playlist-item-card.playing::before {
         content: "";
         position: absolute;
         left: 0;
@@ -462,18 +462,18 @@
         background: linear-gradient(to bottom, var(--accent), var(--accent2));
         border-radius: 999px 0 0 999px;
       }
-      .ad-card.disabled {
+      .playlist-item-card.disabled {
         opacity: 0.45;
       }
-      .ad-card.expired {
+      .playlist-item-card.expired {
         opacity: 0.35;
       }
-      .ad-card.dragging {
+      .playlist-item-card.dragging {
         opacity: 0.5;
         transform: scale(0.98);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
       }
-      .ad-card.drag-over {
+      .playlist-item-card.drag-over {
         border-color: var(--accent);
         background: rgba(99, 102, 241, 0.1);
       }
@@ -498,7 +498,7 @@
         cursor: grabbing;
       }
 
-      .ad-thumb {
+      .playlist-item-thumb {
         width: 72px;
         height: 50px;
         border-radius: 10px;
@@ -511,15 +511,15 @@
         font-size: 22px;
         position: relative;
       }
-      .ad-thumb img,
-      .ad-thumb video {
+      .playlist-item-thumb img,
+      .playlist-item-thumb video {
         width: 100%;
         height: 100%;
         object-fit: cover;
         object-position: center;
         display: block;
       }
-      .ad-thumb .play-overlay {
+      .playlist-item-thumb .play-overlay {
         position: absolute;
         inset: 0;
         background: rgba(99, 102, 241, 0.6);
@@ -529,10 +529,10 @@
         border-radius: 10px;
       }
 
-      .ad-info {
+      .playlist-item-info {
         min-width: 0;
       }
-      .ad-title {
+      .playlist-item-title {
         font-size: 14px;
         font-weight: 600;
         color: var(--text);
@@ -545,7 +545,7 @@
         gap: 8px;
         flex-wrap: wrap;
       }
-      .ad-meta {
+      .playlist-item-meta {
         font-size: 12px;
         color: var(--text-sm);
         display: flex;
@@ -586,7 +586,7 @@
         color: var(--yellow);
       }
 
-      .ad-actions {
+      .playlist-item-actions {
         display: flex;
         align-items: center;
         gap: 6px;
@@ -1032,28 +1032,29 @@
         .stat-card:last-child {
           grid-column: span 2;
         }
-        .ad-card {
+        .playlist-item-card {
           grid-template-columns: 24px 56px 1fr;
           gap: 12px;
           padding: 12px;
           align-items: flex-start;
         }
-        .ad-thumb {
+        .playlist-item-thumb {
           width: 56px !important;
           height: 40px !important;
         }
-        .ad-title {
+        .playlist-item-title {
           font-size: 13px !important;
           white-space: normal !important;
           gap: 6px !important;
           margin-bottom: 6px !important;
+          display: flex !important;
         }
-        .ad-meta {
+        .playlist-item-meta {
           flex-direction: column !important;
           align-items: flex-start !important;
           gap: 6px !important;
         }
-        .ad-actions {
+        .playlist-item-actions {
           display: flex;
           grid-column: 1 / -1;
           justify-content: flex-end;
@@ -1389,7 +1390,7 @@
               Refresh
             </button>
           </div>
-          <div id="ads-list"></div>
+          <div id="playlist-list"></div>
         </div>
       </div>
     </div>
@@ -2079,7 +2080,7 @@
         if (document.activeElement && document.activeElement.classList.contains("duration-input")) {
           return;
         }
-        const list = document.getElementById("ads-list");
+        const list = document.getElementById("playlist-list");
         const data = filteredAds();
         if (!data.length) {
           list.innerHTML = `<div class="empty-state"><div class="es-icon">🔍</div><h3>No ads yet</h3><p>Add your first advertisement to start the playlist.</p></div>`;
@@ -2093,7 +2094,7 @@
           const scheduled = isScheduledNow(ad);
           const playing = ad.id === currentPlayingAdId; // Precise dynamic playing highlight!
           const div = document.createElement("div");
-          div.className = `ad-card${playing ? " playing" : ""}${!ad.active ? " disabled" : ""}${expired ? " expired" : ""}${ad.active && !expired && !scheduled ? " disabled" : ""}`;
+          div.className = `playlist-item-card${playing ? " playing" : ""}${!ad.active ? " disabled" : ""}${expired ? " expired" : ""}${ad.active && !expired && !scheduled ? " disabled" : ""}`;
           div.draggable = true;
           div.dataset.id = ad.id;
 
@@ -2115,7 +2116,7 @@
             <div class="drag-handle" title="Drag to reorder">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
             </div>
-            <div class="ad-thumb">
+            <div class="playlist-item-thumb">
               ${
                 ad.src
                   ? isVideo
@@ -2125,8 +2126,8 @@
               }
               ${playing ? `<div class="play-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg></div>` : ""}
             </div>
-            <div class="ad-info">
-              <div class="ad-title">
+            <div class="playlist-item-info">
+              <div class="playlist-item-title">
                 ${displayTitle}
                 ${playing ? '<span class="badge badge-now">NOW</span>' : ""}
                 <span class="badge ${isVideo ? "badge-video" : "badge-image"}">${isVideo ? "Video" : "Image"}</span>
@@ -2135,8 +2136,8 @@
                 ${ad.active && !expired && !scheduled ? '<span class="badge badge-expired" style="background:rgba(245,158,11,0.1);color:#f59e0b;">Off Schedule</span>' : ""}
                 ${ad.isOffline ? '<span class="badge" style="background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2);">Offline Pending</span>' : ""}
               </div>
-              ${ad.desc ? `<div class="ad-desc-display" style="font-size:12px;color:var(--text-sm);opacity:0.8;margin:2px 0 6px 0;line-height:1.4;white-space:normal;word-break:break-word;">📝 ${ad.desc}</div>` : ""}
-              <div class="ad-meta">
+              ${ad.desc ? `<div class="playlist-item-desc" style="font-size:12px;color:var(--text-sm);opacity:0.8;margin:2px 0 6px 0;line-height:1.4;white-space:normal;word-break:break-word;">📝 ${ad.desc}</div>` : ""}
+              <div class="playlist-item-meta">
                 <span>${ad.category || "—"}</span>
                 <span>·</span>
                 ${
@@ -2145,8 +2146,8 @@
                     : `<div class="duration-wrap">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                       <input draggable="false" onkeydown="event.stopPropagation()" onkeypress="event.stopPropagation()" class="duration-input" type="number" value="${ad.duration || 10}" min="3" max="120"
-                        onfocus="this.closest('.ad-card').setAttribute('draggable', 'false')"
-                        onblur="this.closest('.ad-card').setAttribute('draggable', 'true')"
+                        onfocus="this.closest('.playlist-item-card').setAttribute('draggable', 'false')"
+                        onblur="this.closest('.playlist-item-card').setAttribute('draggable', 'true')"
                         onchange="updateDuration(${ad.id}, this.value)" onclick="event.stopPropagation()" title="Duration (seconds)">
                       <span>sec</span>
                     </div>`
@@ -2156,7 +2157,7 @@
                 ${ad.showDetails !== false ? `<span style="display:block;width:100%;color:var(--green);font-size:11px;margin-top:1px;">📋 Details Visible on screens</span>` : ""}
               </div>
             </div>
-            <div class="ad-actions">
+            <div class="playlist-item-actions">
               <div class="toggle${ad.active ? " on" : ""}" title="${ad.active ? "Disable" : "Enable"}" onclick="toggleActive(${ad.id})"></div>
               <button class="btn btn-ghost btn-sm btn-icon" style="color:var(--green);" title="Play Now" onclick="forcePlayAd(${ad.id})">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
@@ -2727,10 +2728,10 @@
         updateStats();
 
         // Highlight card in playlist manager without destructive re-render
-        document.querySelectorAll(".ad-card").forEach((card) => {
+        document.querySelectorAll(".playlist-item-card").forEach((card) => {
           const cardId = Number(card.dataset.id);
-          const titleEl = card.querySelector(".ad-title");
-          const thumbEl = card.querySelector(".ad-thumb");
+          const titleEl = card.querySelector(".playlist-item-title");
+          const thumbEl = card.querySelector(".playlist-item-thumb");
           const nowBadge = card.querySelector(".badge-now");
           const playOverlay = card.querySelector(".play-overlay");
 
