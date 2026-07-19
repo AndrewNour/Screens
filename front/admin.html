@@ -2135,6 +2135,7 @@
                 ${ad.active && !expired && !scheduled ? '<span class="badge badge-expired" style="background:rgba(245,158,11,0.1);color:#f59e0b;">Off Schedule</span>' : ""}
                 ${ad.isOffline ? '<span class="badge" style="background:rgba(99,102,241,0.1);color:#6366f1;border:1px solid rgba(99,102,241,0.2);">Offline Pending</span>' : ""}
               </div>
+              ${ad.desc ? `<div class="ad-desc-display" style="font-size:12px;color:var(--text-sm);opacity:0.8;margin:2px 0 6px 0;line-height:1.4;white-space:normal;word-break:break-word;">📝 ${ad.desc}</div>` : ""}
               <div class="ad-meta">
                 <span>${ad.category || "—"}</span>
                 <span>·</span>
