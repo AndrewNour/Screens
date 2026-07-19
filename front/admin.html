@@ -1005,7 +1005,12 @@
           gap: 10px;
         }
         .ad-actions {
-          display: none;
+          display: flex;
+          grid-column: 1 / -1;
+          justify-content: flex-end;
+          border-top: 1px solid var(--border);
+          padding-top: 8px;
+          margin-top: 4px;
         }
         .form-row {
           grid-template-columns: 1fr;
@@ -1614,9 +1619,12 @@
         });
       }
 
-      // Sync offline ads back to the server
+      // Sync offline ads back to the server (with concurrency lock to prevent duplicate uploads)
+      let isSyncing = false;
       async function syncOfflineAds() {
-        if (!navigator.onLine) return;
+        if (isSyncing || !navigator.onLine) return;
+        isSyncing = true;
+        
         try {
           const offlineAds = await getAllItems('offline-ads');
           if (!offlineAds.length) return;
@@ -1655,6 +1663,8 @@
           load();
         } catch (err) {
           console.error("Sync error:", err);
+        } finally {
+          isSyncing = false;
         }
       }
 
