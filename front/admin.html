@@ -1034,7 +1034,24 @@
         }
         .ad-card {
           grid-template-columns: 24px 56px 1fr;
-          gap: 10px;
+          gap: 12px;
+          padding: 12px;
+          align-items: flex-start;
+        }
+        .ad-thumb {
+          width: 56px !important;
+          height: 40px !important;
+        }
+        .ad-title {
+          font-size: 13px !important;
+          white-space: normal !important;
+          gap: 6px !important;
+          margin-bottom: 6px !important;
+        }
+        .ad-meta {
+          flex-direction: column !important;
+          align-items: flex-start !important;
+          gap: 6px !important;
         }
         .ad-actions {
           display: flex;
@@ -1042,7 +1059,8 @@
           justify-content: flex-end;
           border-top: 1px solid var(--border);
           padding-top: 8px;
-          margin-top: 4px;
+          margin-top: 8px;
+          width: 100%;
         }
         .form-row {
           grid-template-columns: 1fr;
