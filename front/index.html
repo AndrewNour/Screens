@@ -125,21 +125,29 @@
       .slide-bg {
         position: absolute;
         inset: 0;
-        background-size: cover;
-        background-position: center;
-        transition: transform 8s linear;
+        overflow: hidden;
       }
-      .slide.active .slide-bg {
-        transform: scale(1.06);
-      }
-
       .slide-bg img.bg-image,
       .slide-bg video.bg-video {
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        object-position: center;
+        object-fit: contain;
+        position: relative;
+        z-index: 2;
         display: block;
+      }
+      .slide-bg img.bg-image-blur,
+      .slide-bg video.bg-video-blur {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(24px) brightness(0.55);
+        transform: scale(1.08);
+        opacity: 0.75;
+        z-index: 1;
+        pointer-events: none;
       }
 
       .slide-overlay {
@@ -1086,9 +1094,15 @@
           
           let bgContent;
           if (hasSrc && isVideo) {
-            bgContent = `<video class="bg-video" autoplay muted playsinline preload="auto"></video>`;
+            bgContent = `
+              <video class="bg-video-blur" autoplay muted playsinline loop preload="auto"></video>
+              <video class="bg-video" autoplay muted playsinline preload="auto"></video>
+            `;
           } else if (hasSrc) {
-            bgContent = `<img class="bg-image" src="${mediaUrl}" alt="${ad.title || ""}" loading="lazy">`;
+            bgContent = `
+              <img class="bg-image-blur" src="${mediaUrl}" alt="">
+              <img class="bg-image" src="${mediaUrl}" alt="${ad.title || ""}" loading="lazy">
+            `;
           } else {
             bgContent = `
               <div class="ph-glow" style="width:400px;height:400px;background:${ad.glowColor || "#6366f1"};top:20%;left:20%;"></div>
@@ -1119,8 +1133,10 @@
           stage.appendChild(div);
 
           if (hasSrc && isVideo) {
-            const v = div.querySelector("video");
-            v.src = mediaUrl;
+            const vBlur = div.querySelector("video.bg-video-blur");
+            const v = div.querySelector("video.bg-video");
+            if (vBlur) vBlur.src = mediaUrl;
+            if (v) v.src = mediaUrl;
           }
         });
       }
@@ -1311,7 +1327,8 @@
 
         if (ad.type === "video" && (ad.src || ad.fileBlob)) {
           const slideEl = document.getElementById(`slide-${current}`);
-          const v = slideEl ? slideEl.querySelector("video") : null;
+          const v = slideEl ? slideEl.querySelector("video.bg-video") : null;
+          const vBlur = slideEl ? slideEl.querySelector("video.bg-video-blur") : null;
           if (v) {
             activeVideoEl = v;
             
@@ -1325,6 +1342,12 @@
               v.muted = true;
               v.play().catch(() => {});
             });
+            
+            if (vBlur) {
+              vBlur.load();
+              vBlur.currentTime = 0;
+              vBlur.play().catch(() => {});
+            }
             
             v.onended = () => goTo(current + 1);
             
