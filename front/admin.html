@@ -1618,6 +1618,15 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+      // Global error listener to help debug on different devices
+      window.onerror = function(message, source, lineno, colno, error) {
+        if (typeof toast === 'function') {
+          toast(`⚠ JS Error: ${message} at line ${lineno}`);
+        }
+        console.error("Global JS Error:", message, "at", source, ":", lineno);
+        return false;
+      };
+
       // ── INDEXEDDB SETUP ──
       const DB_NAME = 'OnAirDB';
       const DB_VERSION = 1;
@@ -2712,6 +2721,11 @@
       // Socket.io listener
       let socket = null;
       function connectWebSocket() {
+        if (typeof io === 'undefined') {
+          console.warn("Socket.io library not loaded yet. Retrying in 2 seconds...");
+          setTimeout(connectWebSocket, 2000);
+          return;
+        }
         socket = io();
 
         socket.on('connect', () => {
