@@ -1660,14 +1660,14 @@
 
       window.addEventListener('online', syncOfflineAds);
 
-      // Redirect /admin.html or /admin to / to ensure correct PWA scope
-      if (window.location.pathname.endsWith('/admin.html') || window.location.pathname.endsWith('/admin')) {
-        window.location.href = window.location.origin + '/';
+      // Redirect /admin.html to /admin to ensure correct PWA scope
+      if (window.location.pathname.endsWith('/admin.html')) {
+        window.location.href = window.location.origin + '/admin';
       }
 
-      // Register service worker with root scope immediately
+      // Register service worker with admin scope immediately
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/admin_sw.js', { scope: '/' })
+        navigator.serviceWorker.register('/admin_sw.js', { scope: '/admin' })
           .then(reg => console.log('Admin PWA ServiceWorker registered', reg))
           .catch(err => console.log('Admin PWA ServiceWorker failed', err));
       }

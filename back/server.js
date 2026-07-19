@@ -322,8 +322,7 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Default routing mapping to the front/ directory (defined BEFORE static middleware to override index.html)
 app.get('/', (req, res) => {
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  res.sendFile(path.join(__dirname, '../front/admin.html'));
+  res.redirect('/admin');
 });
 app.get('/admin', (req, res) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
