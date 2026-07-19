@@ -861,6 +861,33 @@
         flex-wrap: wrap;
       }
 
+      #bottom-nav {
+        display: none;
+      }
+      .bottom-nav-item {
+        background: none;
+        border: none;
+        color: var(--text-sm);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: color 0.2s;
+        padding: 8px;
+      }
+      .bottom-nav-item svg {
+        transition: transform 0.2s;
+      }
+      .bottom-nav-item:active svg {
+        transform: scale(0.9);
+      }
+      .bottom-nav-item.active {
+        color: var(--accent2);
+      }
+
       #toast {
         position: fixed;
         bottom: 24px;
@@ -955,40 +982,38 @@
         }
       }
       @media (max-width: 768px) {
-        #layout {
-          flex-direction: column;
-        }
         #sidebar {
-          width: 100%;
-          min-height: auto;
-          height: auto;
-          position: static;
-          flex-direction: row;
-          flex-wrap: wrap;
+          display: none !important;
+        }
+        #bottom-nav {
+          display: flex !important;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 64px;
+          background: rgba(8, 10, 15, 0.94);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border-top: 1px solid var(--border);
+          z-index: 1000;
+          justify-content: space-around;
           align-items: center;
-          padding: 10px 12px;
-          gap: 6px;
-          border-right: none;
-          border-bottom: 1px solid var(--border);
-          overflow-x: auto;
+          padding-bottom: env(safe-area-inset-bottom);
         }
-        .sidebar-logo {
-          padding: 0;
-          border: none;
-          flex-shrink: 0;
-        }
-        .nav-section {
-          display: none;
-        }
-        .nav-item {
-          padding: 7px 10px;
-          font-size: 12px;
-          flex-shrink: 0;
+        #main {
+          margin-bottom: 74px;
         }
         #topbar {
           padding: 0 16px;
           height: 56px;
-          flex-wrap: wrap;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .topbar-actions {
+          display: none !important;
         }
         .topbar-title {
           font-size: 15px;
@@ -999,6 +1024,9 @@
         .stats-grid {
           grid-template-columns: repeat(2, 1fr);
           gap: 10px;
+        }
+        .stat-card:last-child {
+          grid-column: span 2;
         }
         .ad-card {
           grid-template-columns: 24px 56px 1fr;
@@ -1016,7 +1044,13 @@
           grid-template-columns: 1fr;
         }
         .search-wrap {
-          width: 140px;
+          width: 110px;
+        }
+        #toast {
+          bottom: 80px;
+          right: 16px;
+          left: 16px;
+          align-items: center;
         }
       }
       @media (max-width: 480px) {
@@ -1237,35 +1271,37 @@
               <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
           </button>
-          <a class="btn btn-ghost" href="index.html" target="_blank">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
-            Display
-          </a>
-          <button class="btn btn-primary" onclick="openModal()">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            New Ad
-          </button>
+          <div class="topbar-actions">
+            <a class="btn btn-ghost" href="/screens" target="_blank">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="2" y="3" width="20" height="14" rx="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              Display
+            </a>
+            <button class="btn btn-primary" onclick="openModal()">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              New Ad
+            </button>
+          </div>
         </div>
 
         <div id="content">
@@ -1549,6 +1585,29 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <div id="bottom-nav">
+      <button class="bottom-nav-item active" onclick="window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+        </svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="bottom-nav-item" onclick="openModal(); return false;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+        <span>New Ad</span>
+      </button>
+      <button class="bottom-nav-item" onclick="window.open('/screens', '_blank'); return false;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+        <span>Display</span>
+      </button>
     </div>
 
     <div id="toast"></div>
