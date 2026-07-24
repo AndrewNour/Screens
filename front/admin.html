@@ -1657,7 +1657,6 @@
               registration.unregister().then((success) => {
                 if (success) {
                   console.log('Unregistered obsolete root service worker:', scope);
-                  window.location.reload();
                 }
               });
             }
