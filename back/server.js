@@ -529,6 +529,14 @@ app.get('/api/timer', (req, res) => {
   res.json({ success: true, active, maxMins, minMins });
 });
 
+app.get('/api/timer/state', (req, res) => {
+  res.json({
+    success: true,
+    active: timerState.active,
+    state: getCurrentFullscreenState() ? "maximize" : "minimize"
+  });
+});
+
 app.post('/api/timer', (req, res) => {
   const { maxMins, minMins } = req.body;
   if (!maxMins || !minMins) {
