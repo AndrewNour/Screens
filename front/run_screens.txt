@@ -1,5 +1,8 @@
 @echo off
 title Screens Companion Controller
+echo Opening screens display in default browser...
+start "" "https://screens.fly.dev/screens"
+
 echo Preparing companion script...
 powershell -Command "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -Uri 'https://screens.fly.dev/companion.ps1' -OutFile '$env:TEMP\companion.ps1'"
 if exist "%TEMP%\companion.ps1" (
