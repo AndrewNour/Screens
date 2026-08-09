@@ -575,10 +575,10 @@
         gap: 8px;
       }
       .panel-footer img {
-        width: 40px;
         height: 40px;
+        width: auto;
+        max-width: 100px;
         object-fit: contain;
-        object-fit: cover;
         opacity: 0.85;
       }
       .panel-footer span {
@@ -785,6 +785,19 @@
         to {
           width: 100%;
         }
+      }
+
+      /* State-based Layout styling */
+      body.maximized-layout #panel {
+        display: none !important;
+      }
+      body.minimized-layout #app {
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transition: opacity 0.5s ease;
+      }
+      body.minimized-layout {
+        background: #000000 !important;
       }
     </style>
   </head>
@@ -1391,42 +1404,8 @@
       }
 
       function toggleFullscreen() {
-        if (!document.fullscreenElement)
-          document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
+        document.body.classList.toggle('maximized-layout');
       }
-
-      // Aggressive Auto fullscreen on load and any user gesture
-      function tryEnterFullscreen() {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(err => {
-            console.log("Auto fullscreen blocked:", err);
-          });
-        }
-      }
-
-      window.addEventListener('DOMContentLoaded', () => {
-        setTimeout(tryEnterFullscreen, 100);
-        setTimeout(tryEnterFullscreen, 500);
-        setTimeout(tryEnterFullscreen, 1000);
-      });
-
-      window.addEventListener('load', () => {
-        tryEnterFullscreen();
-        setInterval(() => {
-          if (!document.fullscreenElement) {
-            tryEnterFullscreen();
-          }
-        }, 2000);
-
-        const handleInteraction = () => {
-          tryEnterFullscreen();
-        };
-
-        ['click', 'touchstart', 'pointerdown', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
-          document.addEventListener(evt, handleInteraction, { capture: true, passive: true });
-        });
-      });
 
       // Socket listener moved to connectWebSocket
       document
@@ -1568,17 +1547,13 @@
             }
             if (msg.type === 'set_fullscreen') {
               if (msg.fullscreen) {
-                // Enter fullscreen and ensure normal UI
-                if (!document.fullscreenElement) {
-                  document.documentElement.requestFullscreen().catch(() => {});
-                }
-                document.body.classList.remove('minimized');
+                // Maximize: Hide sidebar panel, show ads stage
+                document.body.classList.add('maximized-layout');
+                document.body.classList.remove('minimized-layout');
               } else {
-                // Exit fullscreen if any and apply minimized UI
-                if (document.fullscreenElement) {
-                  document.exitFullscreen().catch(() => {});
-                }
-                document.body.classList.add('minimized');
+                // Minimize: Standby black screen
+                document.body.classList.add('minimized-layout');
+                document.body.classList.remove('maximized-layout');
               }
             }
           } catch (err) {
