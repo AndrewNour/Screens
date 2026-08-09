@@ -388,7 +388,11 @@ io.on('connection', (socket) => {
         if (currentPlayingAdId !== null) {
           socket.emit('message', { type: 'force-play', adId: currentPlayingAdId });
         }
-        socket.emit('message', { type: 'set_fullscreen', fullscreen: getCurrentFullscreenState() });
+        socket.emit('message', {
+          type: 'set_fullscreen',
+          active: timerState.active,
+          fullscreen: getCurrentFullscreenState()
+        });
       }
       if (msg.type === 'playing') {
         currentPlayingAdId = msg.adId;
@@ -486,14 +490,14 @@ function startTimer(maxMins, minMins) {
   const totalCycleMs = maxMs + minMs;
   let isMax = true;
   // Immediately set fullscreen to maximize
-  broadcast({ type: 'set_fullscreen', fullscreen: true });
+  broadcast({ type: 'set_fullscreen', active: true, fullscreen: true });
 
   timerState.intervalId = setInterval(() => {
     const elapsed = (Date.now() - timerState.startTime) % totalCycleMs;
     const shouldBeMax = elapsed < maxMs;
     if (shouldBeMax !== isMax) {
       isMax = shouldBeMax;
-      broadcast({ type: 'set_fullscreen', fullscreen: isMax });
+      broadcast({ type: 'set_fullscreen', active: true, fullscreen: isMax });
     }
   }, 1000);
   saveTimer();
@@ -506,6 +510,7 @@ function stopTimer() {
   }
   timerState.active = false;
   timerState.startTime = null;
+  broadcast({ type: 'set_fullscreen', active: false });
   saveTimer();
 }
 
@@ -516,14 +521,14 @@ function resumeTimer() {
   let isMax = true;
   const elapsedSinceStart = (Date.now() - timerState.startTime) % totalCycleMs;
   isMax = elapsedSinceStart < maxMs;
-  broadcast({ type: 'set_fullscreen', fullscreen: isMax });
+  broadcast({ type: 'set_fullscreen', active: true, fullscreen: isMax });
 
   timerState.intervalId = setInterval(() => {
     const elapsed = (Date.now() - timerState.startTime) % totalCycleMs;
     const shouldBeMax = elapsed < maxMs;
     if (shouldBeMax !== isMax) {
       isMax = shouldBeMax;
-      broadcast({ type: 'set_fullscreen', fullscreen: isMax });
+      broadcast({ type: 'set_fullscreen', active: true, fullscreen: isMax });
     }
   }, 1000);
 }
