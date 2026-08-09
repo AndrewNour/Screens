@@ -37,7 +37,7 @@ while ($true) {
                 
                 # Find Chrome, Edge, or Brave processes running the screens page
                 $process = Get-Process -Name "chrome", "msedge", "brave" -ErrorAction SilentlyContinue | 
-                    Where-Object { $_.MainWindowTitle -like "*خدمة الشاشات*" } | 
+                    Where-Object { $_.MainWindowTitle -like "*خدم? الشاشات*" } | 
                     Select-Object -First 1
                 
                 if ($process) {
@@ -60,7 +60,7 @@ while ($true) {
                 $lastState = "inactive"
                 Write-Host "$(Get-Date -Format 'HH:mm:ss') | Timer is INACTIVE. Restoring window..." -ForegroundColor Gray
                 $process = Get-Process -Name "chrome", "msedge", "brave" -ErrorAction SilentlyContinue | 
-                    Where-Object { $_.MainWindowTitle -like "*خدمة الشاشات*" } | 
+                    Where-Object { $_.MainWindowTitle -like "*خدم? الشاشات*" } | 
                     Select-Object -First 1
                 if ($process) {
                     $hwnd = $process.MainWindowHandle
