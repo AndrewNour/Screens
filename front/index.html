@@ -802,6 +802,15 @@
     </style>
   </head>
   <body class="maximized-layout">
+    <!-- Landing / Controller page for OS-level window control -->
+    <div id="controller-overlay" style="display: none; position: fixed; inset: 0; background: #0b0f19; z-index: 9999; align-items: center; justify-content: center; flex-direction: column; gap: 20px; color: #fff; text-align: center; padding: 24px;">
+      <img src="/logo2.png" alt="Logo" style="width: 100px; height: 100px; object-fit: contain; border-radius: 20px; box-shadow: 0 10px 30px rgba(99,102,241,0.3);" />
+      <h2 style="font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">بوابة الشاشات التلقائية</h2>
+      <p style="color: rgba(255,255,255,0.6); font-size: 15px; max-width: 450px; line-height: 1.6;">اضغط على الزر أدناه لفتح شاشة العرض التلقائية في نافذة منبثقة. سيتم التحكم في حجمها وموقعها وإخفائها تلقائياً حسب التوقيتات المضبوطة من الأدمن لكي تظهر الكاميرات خلفها.</p>
+      <button onclick="openDisplayWindow()" style="background: linear-gradient(135deg, #6366f1, #a78bfa); color: #fff; border: none; padding: 14px 32px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 25px rgba(99,102,241,0.4); transition: transform 0.2s, box-shadow 0.2s; outline: none;">فتح شاشة العرض التلقائية</button>
+      <div id="controller-status" style="font-size: 14px; color: #22c55e; margin-top: 10px; display: none; font-weight: 600;">✔ شاشة العرض نشطة وتعمل بالخلفية الآن...</div>
+    </div>
+
     <div id="loader">
       <img src="/Untitled-1.png" alt="Logo" style="max-width: 80%; max-height: 50vh; object-fit: contain; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);" />
       <div class="loader-bar"><div class="loader-fill"></div></div>
@@ -1517,6 +1526,33 @@
       }
 
       // Socket.io listener
+      let displayWindow = null;
+      const isDisplayWindow = window.location.search.includes('display=true');
+
+      if (!isDisplayWindow) {
+        document.addEventListener("DOMContentLoaded", () => {
+          const overlay = document.getElementById('controller-overlay');
+          if (overlay) overlay.style.display = 'flex';
+        });
+      }
+
+      function openDisplayWindow() {
+        const w = window.screen.availWidth;
+        const h = window.screen.availHeight;
+        displayWindow = window.open(
+          '/screens?display=true', 
+          'screens_display', 
+          `width=${w},height=${h},top=0,left=0,resizable=yes,scrollbars=no,status=no,location=no,toolbar=no,menubar=no`
+        );
+        if (displayWindow) {
+          const status = document.getElementById('controller-status');
+          if (status) status.style.display = 'block';
+          console.log("✔ Popup display window opened successfully.");
+        } else {
+          alert("⚠ فشل فتح النافذة تلقائياً. يرجى السماح بالنوافذ المنبثقة (Popups) في إعدادات متصفحك أولاً ثم أعد المحاولة.");
+        }
+      }
+
       let socket = null;
       function connectWebSocket() {
         if (typeof io === 'undefined') {
@@ -1548,12 +1584,29 @@
             if (msg.type === 'set_fullscreen') {
               if (msg.fullscreen) {
                 // Maximize: Hide sidebar panel, show ads stage
-                document.body.classList.add('maximized-layout');
-                document.body.classList.remove('minimized-layout');
+                if (isDisplayWindow) {
+                  document.body.classList.add('maximized-layout');
+                  document.body.classList.remove('minimized-layout');
+                } else {
+                  // If we are the controller, maximize the child window
+                  if (displayWindow && !displayWindow.closed) {
+                    displayWindow.moveTo(0, 0);
+                    displayWindow.resizeTo(window.screen.availWidth, window.screen.availHeight);
+                    displayWindow.focus();
+                  }
+                }
               } else {
-                // Minimize: Standby black screen
-                document.body.classList.add('minimized-layout');
-                document.body.classList.remove('maximized-layout');
+                // Minimize: Standby black screen or hide child window
+                if (isDisplayWindow) {
+                  document.body.classList.add('minimized-layout');
+                  document.body.classList.remove('maximized-layout');
+                } else {
+                  // If we are the controller, minimize the child window (move offscreen)
+                  if (displayWindow && !displayWindow.closed) {
+                    displayWindow.moveTo(-9999, -9999);
+                    displayWindow.resizeTo(100, 100);
+                  }
+                }
               }
             }
           } catch (err) {
