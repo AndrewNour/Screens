@@ -787,18 +787,6 @@
         }
       }
 
-      /* State-based Layout styling */
-      body.maximized-layout #panel {
-        display: none !important;
-      }
-      body.minimized-layout #app {
-        opacity: 0 !important;
-        pointer-events: none !important;
-        transition: opacity 0.5s ease;
-      }
-      body.minimized-layout {
-        background: #000000 !important;
-      }
     </style>
   </head>
   <body>
@@ -1547,17 +1535,7 @@
                 goTo(idx);
               }
             }
-            if (msg.type === 'set_fullscreen') {
-              if (msg.fullscreen) {
-                // Maximize: Hide sidebar panel, show ads stage
-                document.body.classList.add('maximized-layout');
-                document.body.classList.remove('minimized-layout');
-              } else {
-                // Minimize: Standby black screen
-                document.body.classList.add('minimized-layout');
-                document.body.classList.remove('maximized-layout');
-              }
-            }
+
           } catch (err) {
             console.error('Error handling Socket.io message:', err);
           }
