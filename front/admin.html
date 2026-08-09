@@ -2053,6 +2053,45 @@
         await syncTimerStatus();
       }
 
+      let timerCountdownInterval = null;
+      function startLocalCountdown(active, maxMins, minMins, startTime) {
+        if (timerCountdownInterval) clearInterval(timerCountdownInterval);
+        if (!active || !startTime) return;
+
+        const maxMs = maxMins * 60 * 1000;
+        const minMs = minMins * 60 * 1000;
+        const cycleMs = maxMs + minMs;
+        const badge = document.getElementById('timer-status-badge');
+
+        const updateUI = () => {
+          const now = Date.now();
+          const elapsed = (now - startTime) % cycleMs;
+          
+          let stateName = "";
+          let msLeft = 0;
+          
+          if (elapsed < maxMs) {
+            stateName = "Maximize";
+            msLeft = maxMs - elapsed;
+          } else {
+            stateName = "Minimize";
+            msLeft = cycleMs - elapsed;
+          }
+          
+          const totalSeconds = Math.max(0, Math.floor(msLeft / 1000));
+          const mins = Math.floor(totalSeconds / 60);
+          const secs = totalSeconds % 60;
+          const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
+          
+          if (badge) {
+            badge.textContent = `Status: Active (${stateName} - ${timeString})`;
+          }
+        };
+
+        updateUI();
+        timerCountdownInterval = setInterval(updateUI, 1000);
+      }
+
       async function syncTimerStatus() {
         try {
           const res = await fetch('/api/timer');
@@ -2068,16 +2107,20 @@
               if (badge) {
                 badge.style.background = "rgba(34,197,94,0.15)";
                 badge.style.color = "var(--green)";
-                badge.textContent = "Status: Active";
               }
               if (maxInput) maxInput.value = data.maxMins;
               if (minInput) minInput.value = data.minMins;
+              startLocalCountdown(data.active, data.maxMins, data.minMins, data.startTime);
             } else {
               if (btn) btn.textContent = 'Start Timer';
               if (badge) {
                 badge.style.background = "rgba(100,116,139,0.2)";
                 badge.style.color = "var(--text-sm)";
                 badge.textContent = "Status: Inactive";
+              }
+              if (timerCountdownInterval) {
+                clearInterval(timerCountdownInterval);
+                timerCountdownInterval = null;
               }
             }
           }
@@ -2961,8 +3004,9 @@ function toggleScreenTimer() {
         btn.textContent = 'Stop Timer';
         badge.style.background = "rgba(34,197,94,0.15)";
         badge.style.color = "var(--green)";
-        badge.textContent = "Status: Maximize active";
+        badge.textContent = "Status: Active";
         toast("⏱ Timer started (server-managed)");
+        syncTimerStatus();
       } else {
         toast(`⚠ ${data.error || 'Failed to start timer'}`);
       }
@@ -2978,6 +3022,7 @@ function toggleScreenTimer() {
         badge.style.color = "var(--text-sm)";
         badge.textContent = "Status: Inactive";
         toast("⏹ Timer stopped (server-managed)");
+        syncTimerStatus();
       } else {
         toast(`⚠ ${data.error || 'Failed to stop timer'}`);
       }
