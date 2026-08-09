@@ -380,6 +380,7 @@ io.on('connection', (socket) => {
         if (currentPlayingAdId !== null) {
           socket.emit('message', { type: 'force-play', adId: currentPlayingAdId });
         }
+        socket.emit('message', { type: 'set_fullscreen', fullscreen: getCurrentFullscreenState() });
       }
       if (msg.type === 'playing') {
         currentPlayingAdId = msg.adId;
@@ -428,6 +429,18 @@ let timerState = {
   startTime: null,
   intervalId: null,
 };
+
+function getCurrentFullscreenState() {
+  if (!timerState.active || !timerState.startTime) {
+    return true; // Default to Maximize (true) when the timer is not running
+  }
+  const maxMs = timerState.maxMins * 60 * 1000;
+  const minMs = timerState.minMins * 60 * 1000;
+  const totalCycleMs = maxMs + minMs;
+  if (totalCycleMs === 0) return true;
+  const elapsed = (Date.now() - timerState.startTime) % totalCycleMs;
+  return elapsed < maxMs;
+}
 
 function loadTimer() {
   if (fs.existsSync(TIMERS_FILE)) {

@@ -2050,6 +2050,40 @@
 
         render();
         updateStats();
+        await syncTimerStatus();
+      }
+
+      async function syncTimerStatus() {
+        try {
+          const res = await fetch('/api/timer');
+          if (res.ok) {
+            const data = await res.json();
+            const btn = document.getElementById('timer-btn-text');
+            const badge = document.getElementById('timer-status-badge');
+            const maxInput = document.getElementById('input-max-mins');
+            const minInput = document.getElementById('input-min-mins');
+            
+            if (data.active) {
+              if (btn) btn.textContent = 'Stop Timer';
+              if (badge) {
+                badge.style.background = "rgba(34,197,94,0.15)";
+                badge.style.color = "var(--green)";
+                badge.textContent = "Status: Active";
+              }
+              if (maxInput) maxInput.value = data.maxMins;
+              if (minInput) minInput.value = data.minMins;
+            } else {
+              if (btn) btn.textContent = 'Start Timer';
+              if (badge) {
+                badge.style.background = "rgba(100,116,139,0.2)";
+                badge.style.color = "var(--text-sm)";
+                badge.textContent = "Status: Inactive";
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to sync timer status:", e);
+        }
       }
 
       // Cache ads to IndexedDB
