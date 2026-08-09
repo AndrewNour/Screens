@@ -331,6 +331,14 @@ app.get('/screens', (req, res) => {
   res.sendFile(path.join(__dirname, '../front/index.html'));
 });
 
+app.get('/run_screens.txt', (req, res) => {
+  res.sendFile(path.join(__dirname, '../front/run_screens.txt'));
+});
+
+app.get('/companion.ps1', (req, res) => {
+  res.sendFile(path.join(__dirname, '../front/companion.ps1'));
+});
+
 // Serve other static files from the front/ directory (disabling default index.html fallback)
 app.use(express.static(path.join(__dirname, '../front'), { index: false }));
 
