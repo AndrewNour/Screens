@@ -575,18 +575,19 @@
         gap: 8px;
       }
       .panel-footer img {
-        width: 50px;
-        height: px;
-        border-radius: 7px;
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
         object-fit: cover;
         opacity: 0.85;
       }
       .panel-footer span {
-        font-size: 9px;
+        font-size: 15px;
         color: var(--text);
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: none;
+        font-weight: 600;
+        white-space: nowrap;
       }
 
       /* ── PLACEHOLDER SLIDE DESIGNS ── */
@@ -944,7 +945,7 @@
 
         <div class="panel-footer">
           <img src="/Untitled-1.png" alt="" />
-          <span style="font-size: 18px">on Air اسرة الانبا مكاريوس </span>
+          <span style="font-size: 18px">St-Philopateer-Core</span>
         </div>
       </div>
     </div>
@@ -1394,6 +1395,40 @@
           document.documentElement.requestFullscreen();
         else document.exitFullscreen();
       }
+
+      // Aggressive Auto fullscreen on load and any user gesture
+      function tryEnterFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(err => {
+            console.log("Auto fullscreen blocked:", err);
+          });
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(tryEnterFullscreen, 100);
+        setTimeout(tryEnterFullscreen, 500);
+        setTimeout(tryEnterFullscreen, 1000);
+      });
+
+      window.addEventListener('load', () => {
+        tryEnterFullscreen();
+        setInterval(() => {
+          if (!document.fullscreenElement) {
+            tryEnterFullscreen();
+          }
+        }, 2000);
+
+        const handleInteraction = () => {
+          tryEnterFullscreen();
+        };
+
+        ['click', 'touchstart', 'pointerdown', 'keydown', 'mousemove', 'scroll'].forEach(evt => {
+          document.addEventListener(evt, handleInteraction, { capture: true, passive: true });
+        });
+      });
+
+      // Socket listener moved to connectWebSocket
       document
         .getElementById("btn-fullscreen")
         .addEventListener("click", toggleFullscreen);
@@ -1529,6 +1564,21 @@
               const idx = list.findIndex(a => a.id === msg.adId);
               if (idx !== -1) {
                 goTo(idx);
+              }
+            }
+            if (msg.type === 'set_fullscreen') {
+              if (msg.fullscreen) {
+                // Enter fullscreen and ensure normal UI
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => {});
+                }
+                document.body.classList.remove('minimized');
+              } else {
+                // Exit fullscreen if any and apply minimized UI
+                if (document.fullscreenElement) {
+                  document.exitFullscreen().catch(() => {});
+                }
+                document.body.classList.add('minimized');
               }
             }
           } catch (err) {

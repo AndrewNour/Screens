@@ -26,6 +26,9 @@ app.use(cors());
 app.use(express.json({ limit: '300mb' }));
 app.use(express.urlencoded({ limit: '300mb', extended: true }));
 
+// Serve static files
+app.use('/uploads', express.static(UPLOADS_DIR));
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -387,6 +390,9 @@ io.on('connection', (socket) => {
         broadcast({ type: 'force-play', adId: msg.adId });
         broadcast({ type: 'playing', adId: msg.adId });
       }
+      if (msg.type === 'set_fullscreen') {
+        broadcast({ type: 'set_fullscreen', fullscreen: msg.fullscreen });
+      }
     } catch (err) {
       console.error('Error processing Socket.io message:', err);
     }
@@ -413,6 +419,117 @@ io.on('connection', (socket) => {
 });
 
 // Start Server
+// Timer handling
+const TIMERS_FILE = path.join(__dirname, 'timers.json');
+let timerState = {
+  active: false,
+  maxMins: 5,
+  minMins: 2,
+  startTime: null,
+  intervalId: null,
+};
+
+function loadTimer() {
+  if (fs.existsSync(TIMERS_FILE)) {
+    try {
+      const raw = fs.readFileSync(TIMERS_FILE, 'utf8');
+      const data = JSON.parse(raw);
+      timerState = { ...timerState, ...data };
+      if (timerState.active) {
+        resumeTimer();
+      }
+    } catch (err) {
+      console.error('Failed to load timer config', err);
+    }
+  }
+}
+
+function saveTimer() {
+  try {
+    const toSave = { ...timerState };
+    delete toSave.intervalId;
+    fs.writeFileSync(TIMERS_FILE, JSON.stringify(toSave, null, 2));
+  } catch (err) {
+    console.error('Failed to save timer config', err);
+  }
+}
+
+function startTimer(maxMins, minMins) {
+  if (timerState.intervalId) clearInterval(timerState.intervalId);
+  timerState.active = true;
+  timerState.maxMins = maxMins;
+  timerState.minMins = minMins;
+  timerState.startTime = Date.now();
+  const maxMs = maxMins * 60 * 1000;
+  const minMs = minMins * 60 * 1000;
+  const totalCycleMs = maxMs + minMs;
+  let isMax = true;
+  // Immediately set fullscreen to maximize
+  broadcast({ type: 'set_fullscreen', fullscreen: true });
+
+  timerState.intervalId = setInterval(() => {
+    const elapsed = (Date.now() - timerState.startTime) % totalCycleMs;
+    const shouldBeMax = elapsed < maxMs;
+    if (shouldBeMax !== isMax) {
+      isMax = shouldBeMax;
+      broadcast({ type: 'set_fullscreen', fullscreen: isMax });
+    }
+  }, 1000);
+  saveTimer();
+}
+
+function stopTimer() {
+  if (timerState.intervalId) {
+    clearInterval(timerState.intervalId);
+    timerState.intervalId = null;
+  }
+  timerState.active = false;
+  timerState.startTime = null;
+  saveTimer();
+}
+
+function resumeTimer() {
+  const maxMs = timerState.maxMins * 60 * 1000;
+  const minMs = timerState.minMins * 60 * 1000;
+  const totalCycleMs = maxMs + minMs;
+  let isMax = true;
+  const elapsedSinceStart = (Date.now() - timerState.startTime) % totalCycleMs;
+  isMax = elapsedSinceStart < maxMs;
+  broadcast({ type: 'set_fullscreen', fullscreen: isMax });
+
+  timerState.intervalId = setInterval(() => {
+    const elapsed = (Date.now() - timerState.startTime) % totalCycleMs;
+    const shouldBeMax = elapsed < maxMs;
+    if (shouldBeMax !== isMax) {
+      isMax = shouldBeMax;
+      broadcast({ type: 'set_fullscreen', fullscreen: isMax });
+    }
+  }, 1000);
+}
+
+// Load timer on startup
+loadTimer();
+
+// API endpoints for timer
+app.get('/api/timer', (req, res) => {
+  const { active, maxMins, minMins } = timerState;
+  res.json({ success: true, active, maxMins, minMins });
+});
+
+app.post('/api/timer', (req, res) => {
+  const { maxMins, minMins } = req.body;
+  if (!maxMins || !minMins) {
+    return res.status(400).json({ success: false, error: 'maxMins and minMins required' });
+  }
+  startTimer(Number(maxMins), Number(minMins));
+  res.json({ success: true });
+});
+
+app.post('/api/timer/stop', (req, res) => {
+  stopTimer();
+  res.json({ success: true });
+});
+
 server.listen(PORT, () => {
   console.log(`========================================`);
   console.log(`Server is running on: http://localhost:${PORT}`);

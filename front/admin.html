@@ -1155,7 +1155,7 @@
           </div>
         </div>
         <div class="nav-section">Management</div>
-        <a class="nav-item active" href="#">
+        <a class="nav-item active" href="#" id="nav-dashboard" onclick="switchSection('dashboard', this); return false;">
           <svg
             width="16"
             height="16"
@@ -1170,6 +1170,20 @@
             <rect x="3" y="14" width="7" height="7" />
           </svg>
           Dashboard
+        </a>
+        <a class="nav-item" href="#" id="nav-timer" onclick="switchSection('timer', this); return false;">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          Screen Timer (Max/Min)
         </a>
         <a class="nav-item" href="#" id="sidebar-btn-install" style="display: none;" onclick="triggerInstall(); return false;">
           <svg
@@ -1328,69 +1342,104 @@
         </div>
 
         <div id="content">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon">📋</div>
-              <div class="stat-label">Total Ads</div>
-              <div class="stat-value" id="stat-total">—</div>
-              <div class="stat-sub">In playlist</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">✅</div>
-              <div class="stat-label">Active</div>
-              <div class="stat-value" id="stat-active">—</div>
-              <div class="stat-sub">Running now</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">⏱</div>
-              <div class="stat-label">Total Duration</div>
-              <div class="stat-value" id="stat-duration">—</div>
-              <div class="stat-sub">Per full loop</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">▶️</div>
-              <div class="stat-label">Now Playing</div>
-              <div
-                class="stat-value now-playing-card"
-                id="stat-playing"
-                style="font-size: 13px; line-height: 1.3; margin-top: 4px"
-              ></div>
-              <div class="stat-sub" id="stat-playing-cat">—</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon">🕐</div>
-              <div class="stat-label">Last Saved</div>
-              <div
-                class="stat-value"
-                id="stat-saved"
-                style="font-size: 16px; margin-top: 6px"
-              >
-                —
+          <!-- Screen Timer Section -->
+          <div id="section-timer" style="display: none; max-width: 650px; margin: 0 auto;">
+            <div style="background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow);">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px;">Automated Display Cycle</div>
+                  <div style="font-size: 13px; color: var(--text-sm);">Configure how long the screen stays in Fullscreen (Maximize) versus Normal (Minimize) mode.</div>
+                </div>
+                <div id="timer-status-badge" style="background: rgba(100,116,139,0.2); color: var(--text-sm); font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: 999px;">
+                  Status: Inactive
+                </div>
               </div>
-              <div class="stat-sub"></div>
+              <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Maximize Duration (Minutes)</label>
+                  <input type="number" id="input-max-mins" class="form-input" value="5" min="0.1" step="0.5" />
+                  <div class="form-hint">Time in minutes the display remains maximized in fullscreen.</div>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Minimize Duration (Minutes)</label>
+                  <input type="number" id="input-min-mins" class="form-input" value="2" min="0.1" step="0.5" />
+                  <div class="form-hint">Time in minutes the display remains minimized after maximize.</div>
+                </div>
+                <div style="margin-top: 10px;">
+                  <button class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 15px;" onclick="toggleScreenTimer()">
+                    <span id="timer-btn-text">Start Timer</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="section-header">
-            <div class="section-title">Playlist Manager</div>
-            <span style="font-size: 12px; color: var(--text-xs)"
-              >Drag to reorder</span
-            >
-            <button class="btn btn-ghost btn-sm" onclick="load()">
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
+          <!-- Dashboard Section -->
+          <div id="section-dashboard">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-label">Total Ads</div>
+                <div class="stat-value" id="stat-total">—</div>
+                <div class="stat-sub">In playlist</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-label">Active</div>
+                <div class="stat-value" id="stat-active">—</div>
+                <div class="stat-sub">Running now</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">⏱</div>
+                <div class="stat-label">Total Duration</div>
+                <div class="stat-value" id="stat-duration">—</div>
+                <div class="stat-sub">Per full loop</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">▶️</div>
+                <div class="stat-label">Now Playing</div>
+                <div
+                  class="stat-value now-playing-card"
+                  id="stat-playing"
+                  style="font-size: 13px; line-height: 1.3; margin-top: 4px"
+                ></div>
+                <div class="stat-sub" id="stat-playing-cat">—</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">🕐</div>
+                <div class="stat-label">Last Saved</div>
+                <div
+                  class="stat-value"
+                  id="stat-saved"
+                  style="font-size: 16px; margin-top: 6px"
+                >
+                  —
+                </div>
+                <div class="stat-sub"></div>
+              </div>
+            </div>
+
+            <div class="section-header">
+              <div class="section-title">Playlist Manager</div>
+              <span style="font-size: 12px; color: var(--text-xs)"
+                >Drag to reorder</span
               >
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-              </svg>
-              Refresh
-            </button>
+              <button class="btn btn-ghost btn-sm" onclick="load()">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                >
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                Refresh
+              </button>
+            </div>
+            <div id="playlist-list"></div>
           </div>
-          <div id="playlist-list"></div>
         </div>
       </div>
     </div>
@@ -2832,6 +2881,80 @@
       if (installBtn) {
         installBtn.addEventListener("click", triggerInstall);
       }
+
+      // Section Switching
+      function switchSection(sec, el) {
+        document.querySelectorAll('#sidebar .nav-item').forEach(item => item.classList.remove('active'));
+        if (el) el.classList.add('active');
+
+        const dashSec = document.getElementById('section-dashboard');
+        const timerSec = document.getElementById('section-timer');
+        const searchWrap = document.querySelector('.search-wrap');
+        const topbarTitle = document.querySelector('.topbar-title');
+
+        if (sec === 'timer') {
+          if (dashSec) dashSec.style.display = 'none';
+          if (searchWrap) searchWrap.style.display = 'none';
+          if (timerSec) timerSec.style.display = 'block';
+          if (topbarTitle) topbarTitle.textContent = 'Screen Timer Control';
+        } else {
+          if (timerSec) timerSec.style.display = 'none';
+          if (dashSec) dashSec.style.display = 'block';
+          if (searchWrap) searchWrap.style.display = 'block';
+          if (topbarTitle) topbarTitle.textContent = 'Advertisements';
+        }
+      }
+
+      // Screen Timer Control Logic
+function toggleScreenTimer() {
+  const btn = document.getElementById('timer-btn-text');
+  const badge = document.getElementById('timer-status-badge');
+  if (btn.textContent.trim() === 'Start Timer') {
+    const maxMins = parseFloat(document.getElementById('input-max-mins').value) || 5;
+    const minMins = parseFloat(document.getElementById('input-min-mins').value) || 2;
+    if (maxMins <= 0 || minMins <= 0) {
+      toast("⚠ Please enter valid durations greater than 0");
+      return;
+    }
+    fetch('/api/timer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maxMins, minMins })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        btn.textContent = 'Stop Timer';
+        badge.style.background = "rgba(34,197,94,0.15)";
+        badge.style.color = "var(--green)";
+        badge.textContent = "Status: Maximize active";
+        toast("⏱ Timer started (server-managed)");
+      } else {
+        toast(`⚠ ${data.error || 'Failed to start timer'}`);
+      }
+    })
+    .catch(() => toast('⚠ Network error'));
+  } else {
+    fetch('/api/timer/stop', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        btn.textContent = 'Start Timer';
+        badge.style.background = "rgba(100,116,139,0.2)";
+        badge.style.color = "var(--text-sm)";
+        badge.textContent = "Status: Inactive";
+        toast("⏹ Timer stopped (server-managed)");
+      } else {
+        toast(`⚠ ${data.error || 'Failed to stop timer'}`);
+      }
+    })
+    .catch(() => toast('⚠ Network error'));
+  }
+}
+
+// Keep placeholders for legacy functions (no-op) to avoid reference errors
+function startScreenTimer() { /* deprecated */ }
+function stopScreenTimer() { /* deprecated */ }
     </script>
   </body>
 </html>
